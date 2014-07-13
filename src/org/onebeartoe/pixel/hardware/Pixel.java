@@ -12,8 +12,11 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,6 +32,8 @@ public class Pixel
     public RgbLedMatrix matrix;
     
     public final RgbLedMatrix.Matrix KIND;
+    
+    private static int frame_length = 0;
     
     public static AnalogInput analogInput1;
     
@@ -118,6 +123,177 @@ public class Pixel
 //        matrix = PixelApp.getMatrix();
 	matrix.frame(frame_);
     }
+    
+    
+    public void loadRGB565stream(String raw565ImagePath, int x, int selectedFileTotalFrames, int selectedFileResolution) {
+		// TODO Auto-generated method stub
+    	/*BitmapInputStream = getClass().getClassLoader().getResourceAsStream(raw565ImagePath);
+
+    	try 
+    	{   
+    	    int n = BitmapInputStream.read(BitmapBytes, 0, BitmapBytes.length);
+    	    Arrays.fill(BitmapBytes, n, BitmapBytes.length, (byte) 0);
+    	} 
+    	catch (IOException e) 
+    	{
+    	    System.err.println("An error occured while trying to load " + raw565ImagePath + ".");
+    	    System.err.println("Make sure " + raw565ImagePath + "is included in the executable JAR.");
+    	    e.printStackTrace();
+    	}*/
+    	
+    	File file = new File(raw565ImagePath);
+			if (file.exists()) {
+			
+				
+			/*Because the decoded gif is one big .rgb565 file that contains all the frames, we need
+			to use the raf pointer and extract just a single frame at a time and then we'll move the 
+			pointer to get the next frame until we reach the end of the file*/
+				
+     		RandomAccessFile raf = null;
+			
+			//let's setup the seeker object and set it at the beginning of the rgb565 file
+			try {
+				raf = new RandomAccessFile(file, "r");
+				try {
+					raf.seek(0);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			} catch (FileNotFoundException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}  // "r" means open the file for reading
+		
+			
+			/*if (x == selectedFileTotalFrames) { // Manju - Reached End of the file.  //I don't think we need this part because we already checked if we reached numFrames from the class calling this
+   				x = 0;
+   				try {
+					raf.seek(0); //go to the beginning of the rgb565 file
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} 
+   			}*/
+			
+		/*	if (x == 0) { // Manju - Reached End of the file.  //I don't think we need this part because we already checked if we reached numFrames from the class calling this
+					//x = 0;
+					try {
+					raf.seek(0); //go to the beginning of the rgb565 file
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} 
+			}*/
+			
+			 switch (selectedFileResolution) {
+	            case 16: frame_length = 1048;
+	                     break;
+	            case 32: frame_length = 2048;
+	                     break;
+	            case 64: frame_length = 4096;
+	                     break;
+	            case 128: frame_length = 8192;
+                		break;
+	            default: frame_length = 2048;
+	                     break;
+	          }
+			
+			//now let's see forward to a part of the file
+			try {
+				raf.seek(x*frame_length);
+			} catch (IOException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			} 
+			//Log.d("PixelAnimations","x is: " + x);
+			//Log.d("seeker","seeker is: " + x*frame_length);
+			
+   			 
+   			if (frame_length > Integer.MAX_VALUE) {
+   			    try {
+					throw new IOException("The file is too big");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+   			}
+   			 
+   			// Create the byte array to hold the data
+   			BitmapBytes = new byte[(int)frame_length];
+   			
+   			// Read in the bytes
+   			int offset = 0;
+   			int numRead = 0;
+   			try {
+				while (offset < BitmapBytes.length && (numRead=raf.read(BitmapBytes, offset, BitmapBytes.length-offset)) >= 0) {
+				    offset += numRead;
+				}
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+   			 
+   			// Ensure all the bytes have been read in
+   			if (offset < BitmapBytes.length) {
+   			    try {
+					throw new IOException("The file was not completely read: "+file.getName());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+   			}
+   			 
+   			// Close the input stream, all file contents are in the bytes variable
+   			try {
+   				raf.close();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}	
+   			
+   			//now that we have the byte array loaded, load it into the frame short array
+   			
+   			int y = 0;
+     		for (int i = 0; i < frame_.length; i++) {
+     			frame_[i] = (short) (((short) BitmapBytes[y] & 0xFF) | (((short) BitmapBytes[y + 1] & 0xFF) << 8));
+     			y = y + 2;
+     		}
+     		
+     		//we're done with the images so let's recycle them to save memory
+    	   // canvasBitmap.recycle();
+    	 //  bitmap.recycle(); 
+   		
+	   		//and then load to the LED matrix
+     		
+		   	try {
+		   		matrix.frame(frame_);
+				
+			} catch (ConnectionLostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		  // 	x++;  //this al commented out for this class as I don't think we need it as i is being incremental in the place this class is getting called
+			}
+			
+			else {
+				//showToast("We have a problem, couldn't find the decoded file");
+				System.err.println("An error occured while trying to load " + raw565ImagePath + ".");
+	    	    System.err.println("Make sure " + raw565ImagePath + "is included in the executable JAR.");
+	    	   // e.printStackTrace();
+			}
+    	/*
+    	int y = 0;
+    	for (int f = 0; f < frame_.length; f++) 
+    	{
+    	    frame_[f] = (short) (((short) BitmapBytes[y] & 0xFF) | (((short) BitmapBytes[y + 1] & 0xFF) << 8));
+    	    y = y + 2;
+    	}
+//            matrix = PixelApp.getMatrix();
+    	matrix.frame(frame_);*/
+	}
+    
     
     private void loadRGB565PNG() throws ConnectionLostException 
     {
@@ -239,6 +415,8 @@ public class Pixel
 	    //frame_[i] = (short) (((short) 0xFFFFFFFF & 0xFF) | (((short) (short) 0xFFFFFFFF & 0xFF) << 8));  //all white
 	}
     }
+
+	
 
 	
     

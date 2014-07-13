@@ -1,5 +1,14 @@
 package com.ledpixelart.console;
 
+import ioio.lib.api.IOIO;
+import ioio.lib.api.IOIO.VersionType;
+import ioio.lib.api.RgbLedMatrix;
+import ioio.lib.api.exception.ConnectionLostException;
+import ioio.lib.util.BaseIOIOLooper;
+import ioio.lib.util.IOIOConnectionManager.Thread;
+import ioio.lib.util.IOIOLooper;
+import ioio.lib.util.pc.IOIOConsoleApp;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -11,35 +20,19 @@ import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
-//import javax.lang.model.element.Element;
-import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.onebeartoe.pixel.hardware.Pixel;
-
-
-import ioio.lib.api.DigitalOutput;
-import ioio.lib.api.IOIO;
-import ioio.lib.api.RgbLedMatrix;
-import ioio.lib.api.IOIO.VersionType;
-import ioio.lib.api.exception.ConnectionLostException;
-import ioio.lib.util.BaseIOIOLooper;
-import ioio.lib.util.IOIOConnectionManager.Thread;
-import ioio.lib.util.IOIOLooper;
-import ioio.lib.util.pc.IOIOConsoleApp;
-
-import org.apache.http.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-
-
+import org.onebeartoe.pixel.hardware.Pixel;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+//import javax.lang.model.element.Element;
+
+//import com.ledpixelart.pc.PixelApp;
 
 
 public class PIXELConsole extends IOIOConsoleApp {
@@ -56,6 +49,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static String weatherCondition;
      
 	public static final Pixel pixel = new Pixel(KIND);
+	
+	private static int selectedFileResolution = 2048; //hard coded this for now
 	 
 	public static String pixelFirmware = "Not Found";
 	 
@@ -89,6 +84,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	
 	private static String zip_ = "";
 	
+	private static String gifFileName_ = "";
+	
 	private static String woeid_ = "";
 	
 	private static int zipInt_;
@@ -100,6 +97,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static boolean reportTomorrowWeather = false;
 	
 	private static boolean validCommandLine = false;
+	
+	private static boolean writeMode = false;
+	
+	private static boolean gifMode = false;
+	
+	private static boolean weatherMode = false;
 	
 	private static HttpGet getRequest;
 	
@@ -116,10 +119,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.err.println("PIXEL Weather: Console Version");
+		System.err.println("PIXEL: Console Version");
 		System.err.println();
 		System.err.println("Usage:");
-		System.err.println("pixelweather <options>");
+		System.err.println("pixel <options>");
 		System.err.println();
 		System.err.println("Valid options are:");
 		System.err
@@ -128,6 +131,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 				.println("--woeid=your_woeid_code A numeric number that Yahoo uses to designate your location");
 		System.err
 				.println("--forecast Displays tomorrow's weather conditions, defaults to current weather conditions if not specified");
+		System.err
+		.println("--gif=your_filename.gif  Send this gif to PIXEL");
+		System.err
+		.println("--write  Puts PIXEL into write mode, default is streaming mode");
+		//need an option to display all possible gif names
+		
 	}
 
 	// Boilerplate main(). Copy-paste this code into any IOIOapplication.
@@ -179,16 +188,31 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out.println("Displaying the current weather conditions, use --forecast if you want tomorrow's forecast.\n");
 			}
 			
+			if (arg.startsWith("--gif=")) {
+				gifFileName_ = arg.substring(6);
+				System.out.println("gif file name: " + gifFileName_);
+				gifMode = true;
+				validCommandLine = true;
+				//zipMode = true;
+			}	
+			
+			if (arg.startsWith("--write")) {
+				writeMode = true;
+				System.out.println("PIXEL is in write mode\n");
+			}
+			
 			if (arg.startsWith("--zip=")) {
 				zip_ = arg.substring(6);
 				System.out.println("zip code: " + zip_);
 				validCommandLine = true;
 				zipMode = true;
+				weatherMode = true;
 			} else if (arg.startsWith("--woeid")) {
 				woeid_ = arg.substring(8);
 				System.out.println("woeid: " + woeid_);
 				validCommandLine = true;
 				zipMode = false;
+				weatherMode = true;
 			}
 			
 			if (validCommandLine == false) {
@@ -448,7 +472,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 		String decodedDirPath = "animations/decoded";
 		String imagePath = decodedDirPath; //animations/decoded/rainx.rgb565
 
-		String path = decodedDirPath + "/" + selectedFileName + "/" + selectedFileName + ".txt"; //animations/decoded/rain/rain.txt , this file tells us fps
+		//String path = decodedDirPath + "/" + selectedFileName + "/" + selectedFileName + ".txt"; //animations/decoded/rain/rain.txt , this file tells us fps
+		String path = decodedDirPath + "/" + selectedFileName + ".txt"; //animations/decoded/rain.txt , this file tells us fps
 		//System.out.println("path: " + path);
 		
 		InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path);
@@ -491,7 +516,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	            
 	            stopExistingTimer(); //is this needed, probably not
 	    	
-	    			if (pixelFirmware.equals("PIXL0003")) {
+	    			//if (pixelFirmware.equals("PIXL0003")) {
+	    			if (pixelHardwareID.substring(0,4).equals("PIXL")) {
 	    					pixel.interactiveMode();
 	    					//send loading image
 	    					pixel.writeMode(fps); //need to tell PIXEL the frames per second to use, how fast to play the animations
@@ -511,20 +537,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               			{
 	    	               			    i = 0;
 	    	               			}
-	    	               		
-	    	               		String framestring = "animations/decoded/" + animation_name + "/" + animation_name + i + ".rgb565";
+	    	               		 
+	    	               		//String framestring = "animations/decoded/" + animation_name + "/" + animation_name + i + ".rgb565";
+	    	               		String framestring = "animations/decoded/" + animation_name + ".rgb565";
 	    	               		
 	    	               		System.out.println("framestring: " + framestring);
 
-	    	               		try 
-	    	               		{
-	    	               		    pixel.loadRGB565(framestring);
-	    	               		} 
-	    	               		catch (ConnectionLostException e1) 
-	    	               		{
-	    	               		    // TODO Auto-generated catch block
-	    	               		    e1.printStackTrace();
-	    	               		}
+	    	               		//pixel.loadRGB565(framestring);
+	    	               		   pixel.loadRGB565stream(framestring, i, numFrames, selectedFileResolution);
 	    	      
     	                    }
     	                };
@@ -542,19 +562,13 @@ public class PIXELConsole extends IOIOConsoleApp {
     	 
    	  for (y=0;y<numFrames-1;y++) { //let's loop through and send frame to PIXEL with no delay
  		
- 		framestring = "animations/decoded/" + animation_name + "/" + animation_name + y + ".rgb565";
+ 		//framestring = "animations/decoded/" + animation_name + "/" + animation_name + y + ".rgb565";
+ 		framestring = "animations/decoded/" + animation_name + ".rgb565";
  		
  			System.out.println("writing to PIXEL frame: " + framestring);
 
- 		try 
- 		{
- 		    pixel.loadRGB565(framestring);
- 		} 
- 		catch (ConnectionLostException e1) 
- 		{
- 		    // TODO Auto-generated catch block
- 		    e1.printStackTrace();
- 		}
+ 		//  pixel.loadRGB565(framestring);
+ 		   pixel.loadRGB565stream(framestring, i, numFrames, selectedFileResolution);
    	  } //end for loop
      	 
      }
@@ -622,10 +636,16 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 			System.out.println("Found PIXEL: " + pixel.matrix + "\n");
 			
-			getWeather();
-			//writeImage(); //change this to animate
-			runAnimations();
-			
+			//need to add if statements here, what happens if they choose weather and gif
+			if (gifMode == true) {
+				runAnimations();
+				//do gif stuff
+			}
+			else {
+				getWeather();
+				//writeImage(); //change this to animate
+				runAnimations();
+			}
 			
 			}
 
