@@ -17,6 +17,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
@@ -631,26 +632,38 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 			
 			  GifDecoder d = new GifDecoder();
 	          d.read(gifNamePath);
-	          int numFrames = d.getFrameCount(); //
-	          
-	          int frameDelay = d.getDelay(1); //this means get frame delay of frame 2
+	          int numFrames = d.getFrameCount(); 
+	          int frameDelay = d.getDelay(1); //even though gifs have a frame delay for each frmae, pixel doesn't support this so we'll take the frame rate of the second frame and use this for the whole animation. We take the second frame because often times the frame delay of the first frame in a gif is much longer than the rest of the frames
 	          
 	          Dimension frameSize = d.getFrameSize();
-	          int frameHeight = frameSize.height;
 	          int frameWidth = frameSize.width;
-	          
+	          int frameHeight = frameSize.height;
+	         
 	          System.err.println("frame count: " + numFrames);
 	          System.err.println("frame delay: " + frameDelay);
 	          System.err.println("frame height: " + frameHeight);
 	          System.err.println("frame width: " + frameWidth);
-	          
-	          
+	          	          
 	          for (int i = 0; i < numFrames; i++) { //loop through all the frames
-	             BufferedImage frame = d.getFrame(i);  // frame i
-	             BufferedImage rotatedFrame = rotate90ToLeft(frame); //not sure why this had to be added but for some reason the image was getting rotated so had to add this
-	             //BufferedImage thumbnail = Scalr.resize(frame, 32); //resize it
+	        	// BufferedImage frame = d.getFrame(i);  // frame i
+	             BufferedImage rotatedFrame = d.getFrame(i);  // frame i
+	             //BufferedImage rotatedFrame = rotate90ToRight(frame); //not sure why this had to be added but for some reason the image was getting rotated so had to add this
+	            // rotatedFrame = rotate90ToLeft(rotatedFrame);
+	             rotatedFrame = getFlippedImage(rotatedFrame);
+	             rotatedFrame = rotate90ToLeft(rotatedFrame);
+	             
+	            // BufferedImage rotatedFrame = rotate180(frame);
+	             
+	    		 if (frameWidth != pixelMatrix_width || frameHeight != pixelMatrix_height) {
+	    			 System.out.println("Resizing and encoding " + gifNamePath + " frame " + i);
+	    			 rotatedFrame = Scalr.resize(rotatedFrame, pixelMatrix_width, pixelMatrix_height); //resize it
+	    		 }
+	    		 else {
+	    			 System.out.println("Encoding " + gifNamePath + " frame " + i);
+	    		 }
+	            
 	             BufferedImage sendImg  = new BufferedImage(pixelMatrix_width, pixelMatrix_height, BufferedImage.TYPE_USHORT_565_RGB);
-	             sendImg .getGraphics().drawImage(rotatedFrame, 0, 0, pixelMatrix_width, pixelMatrix_height, null);    
+	             sendImg.getGraphics().drawImage(rotatedFrame, 0, 0, pixelMatrix_width, pixelMatrix_height, null);    
 
 	             int numByte=0;
 	             BitmapBytes = new byte[pixelMatrix_width*pixelMatrix_height*2];
@@ -659,8 +672,8 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                int y=0;
 	                int len = BitmapBytes.length;
 
-	                for (x=0;x< pixelMatrix_width;x++) {
-	                    for (y=0;y< pixelMatrix_height;y++) {
+	                for (x=0 ; x < pixelMatrix_width; x++) {
+	                    for (y=0; y < pixelMatrix_height; y++) {
 
 	                        Color c = new Color(sendImg.getRGB(x, y));
 	                        int aRGBpix = sendImg.getRGB(x, y);
@@ -670,10 +683,10 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                        int blue = c.getBlue();
 
 	                        //RGB888
-	                       // red = (aRGBpix >> 16) & 0x0FF;
-	                       // green = (aRGBpix >> 8) & 0x0FF;
-	                       // blue = (aRGBpix >> 0) & 0x0FF; 
-	                       // alpha = (aRGBpix >> 24) & 0x0FF;
+	                        red = (aRGBpix >> 16) & 0x0FF;
+	                        green = (aRGBpix >> 8) & 0x0FF;
+	                        blue = (aRGBpix >> 0) & 0x0FF; 
+	                        alpha = (aRGBpix >> 24) & 0x0FF;
 
 	                        //RGB565
 	                        red = red >> 3;
@@ -698,7 +711,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                        //Writing it to array - High-byte is the first, big endian byte order
 	                        BitmapBytes[numByte]=byteL;
 	                        BitmapBytes[numByte+1]=byteH;
-
+	                        
 	                        numByte+=2;
 	                    }
 	                }
@@ -762,6 +775,9 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 						e.printStackTrace();
 					}
 		}
+		else {
+			System.out.println("Could not find the file " + gifName);
+		}
 			
 	}  
           
@@ -769,6 +785,23 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	 FileOutputStream fos = new FileOutputStream(filename, true);  //true means append, false is over-write
      fos.write(data);
      fos.close();
+  }
+  
+  public static BufferedImage getFlippedImage(BufferedImage bi) {
+      BufferedImage flipped = new BufferedImage(
+              bi.getWidth(),
+              bi.getHeight(),
+              bi.getType());
+      AffineTransform tran = AffineTransform.getTranslateInstance(bi.getWidth(), 0);
+      AffineTransform flip = AffineTransform.getScaleInstance(-1d, 1d);
+      tran.concatenate(flip);
+
+      Graphics2D g = flipped.createGraphics();
+      g.setTransform(tran);
+      g.drawImage(bi, 0, 0, null);
+      g.dispose();
+
+      return flipped;
   }
   
   
@@ -801,6 +834,32 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 			}
 		}
 		return returnImage;
+	}
+  
+  public BufferedImage rotate180( BufferedImage inputImage ) {
+	//We use BufferedImage because it’s provide methods for pixel manipulation
+		int width = inputImage.getWidth(); //the Width of the original image
+		int height = inputImage.getHeight();//the Height of the original image
+
+		BufferedImage returnImage = new BufferedImage( width, height, inputImage.getType()  );
+	//we created new BufferedImage, which we will return in the end of the program
+	//it set up it to the same width and height as in original image
+	// inputImage.getType() return the type of image ( if it is in RBG, ARGB, etc. )
+
+		for( int x = 0; x < width; x++ ) {
+			for( int y = 0; y < height; y++ ) {
+				returnImage.setRGB( width - x - 1, height - y - 1, inputImage.getRGB( x, y  )  );
+			}
+		}
+	//so we used two loops for getting information from the whole inputImage
+	//then we use method setRGB by whitch we sort the pixel of the return image
+	//the first two parametres is the X and Y location of the pixel in returnImage and the last one is the //source pixel on the inputImage
+	//why we put width – x – 1 and height –y – 1 is hard to explain for me, but when you rotate image by //180degree the pixel with location [0, 0] will be in [ width, height ]. The -1 is for not to go out of
+	//Array size ( remember you always start from 0 so the last index is lower by 1 in the width or height
+	//I enclose Picture for better imagination  ... hope it help you
+		return returnImage;
+	//and the last return the rotated image
+
 	}
     
     
