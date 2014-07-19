@@ -89,7 +89,7 @@ public class PIXELConsole extends IOIOConsoleApp {
   	
   	private static String framestring;
   	
-  	private static float fps = 0;
+  	//private static float fps = 0;
 
 	private static Command command_;
 	
@@ -637,20 +637,18 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    			if (pixelHardwareID.substring(0,4).equals("PIXL") && writeMode == true) {  //in write mode, we don't need a timer because we don't need a delay in between frames, we will first put PIXEL in write mode and then send all frames at once
 	    					pixel.interactiveMode();
 	    					//send loading image
-	    					pixel.writeMode(fps); //need to tell PIXEL the frames per second to use, how fast to play the animations
-	    					
+	    					pixel.writeMode(GIFfps); //need to tell PIXEL the frames per second to use, how fast to play the animations
+	    					System.out.println("Now writing to PIXEL's SD card, the screen will go blank until writing has been completed..."); 
 	    					  int y;
 	    				    	 
 	    				   	  //for (y=0;y<numFrames-1;y++) { //let's loop through and send frame to PIXEL with no delay
-	    				      for (y=0;y<numFrames;y++) { //Al removed the -1, make sure to test that!!!!!
+	    				      for (y=0;y<GIFnumFrames;y++) { //Al removed the -1, make sure to test that!!!!!
 	    				 		
 	    				 			//framestring = "animations/decoded/" + animation_name + ".rgb565";
 	    				 			//System.out.println("Writing to PIXEL: Frame " + y + "of " + GIFnumFrames + " Total Frames");
 	
-	    				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, GIFnumFrames, GIFresolution);
+	    				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, y, GIFnumFrames, GIFresolution);
 	    				   	  } //end for loop
-	    					
-	    					
 	    					pixel.playLocalMode(); //now tell PIXEL to play locally
 	    			}
 	    			else {   //we're not writing so let's just stream
@@ -727,9 +725,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 		    int selectedFileDelay = Integer.parseInt(fileAttribs2[1].trim());	
 		    
 		    if (selectedFileDelay != 0) {  //then we're doing the FPS override which the user selected from settings
-	    		fps = 1000.f / selectedFileDelay;
+	    		GIFfps = 1000.f / selectedFileDelay;
 			} else { 
-	    		fps = 0;
+	    		GIFfps = 0;
 	    	}
 
 		    //****** Now let's setup the animation ******
@@ -744,7 +742,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    			if (pixelHardwareID.substring(0,4).equals("TIXL")) {
 	    					pixel.interactiveMode();
 	    					//send loading image
-	    					pixel.writeMode(fps); //need to tell PIXEL the frames per second to use, how fast to play the animations
+	    					pixel.writeMode(GIFfps); //need to tell PIXEL the frames per second to use, how fast to play the animations
 	    					sendFramesToPIXEL(); //send all the frame to PIXEL
 	    					pixel.playLocalMode(); //now tell PIXEL to play locally
 	    			}
