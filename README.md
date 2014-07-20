@@ -1,24 +1,44 @@
-pixel-weather-console
+pixel-console version
 =====================
 
 A PIXEL console application example. Console meaning java command line based where no GUI is required. 
-This is useful for automating tasks on a dedicated computer like a Raspberry Pi for example. This particular
-piece of code checks the weather conditions and then displays a corresponding weather animation on PIXEL.
+This is useful for automating tasks on a dedicated computer like a Raspberry Pi for example. 
+
+*** PIXEL: Console Version ***
 
 Usage:
+pixel <options>
 
-java -jar pixelweather.jar --zip=<your zip code>
---woeid can also be used in place of zip code
+Valid options are:
+GIF MODE
 
-Use this command if PIXEL is not found to force the port detection
+--gif=your_filename.gif  Send this gif to PIXEL
+--write  Puts PIXEL into write mode, default is streaming mode
+--superpixel  change LED matrix to SUPER PIXEL 64x64
+--16x32  change LED matrix to Adafruit's 16x32 LED matrix
+Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --gif=tree.gif
+Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --gif=tree.gif --superpixel --w
+rite
 
-java -jar -Dioio.SerialPorts=<port of PIXEL> pixelweather.jar --zip=<your zip code>
 
-Here are examples of the PIXEL port convetions:
+WEATHER MODE
+--zip=your_zip_code Non-US users should use woeid
+--woeid=your_woeid_code A numeric number that Yahoo uses
+ to designate your location
+--forecast Displays tomorrow's weather conditions, defaults
+to current weather conditions if not specified
+Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --zip=95050
+Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --zip=95050 --write
+
+
+Omitting -Dioio.SerialPorts=<Port of PIXEL> may still work
+but will take longer for your computer to scan all ports to find PIXEL
+<Port of PIXEL> examples:
 
 Windows: COM40
-Mac: tty.usbmodem41
+Mac: tty.usbmodem1412
 Linux/Raspberry Pi: IOIO0
 
-See https://github.com/ytai/ioio/wiki/Using-IOIO-With-a-PC for further documentation on ports and note there is a driver
-that must be installed for Raspberry Pi and LINUX.
+
+See http://ledpixelart.com/raspberry-pi/ for Rasp Pi setup instructions
+Type q to quite this program

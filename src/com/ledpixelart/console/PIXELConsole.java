@@ -188,11 +188,15 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --zip=95050 --write");
 		
 		System.out.println("\n");
-		System.out.println("Omitting -Dioio.SerialPorts=X where X is the serial port of \n" +
-				"PIXEL on your computer (COMXX for Windows or /dev/tty.usbmodemXXXX for\n" +
-				" Mac/Linux/Rasp Pi may still work but will take longer for your\n" +
-				"computer to scan all ports to find PIXEL.");
+		System.out.println("Omitting -Dioio.SerialPorts=<Port of PIXEL> may still work\n" +
+				"but will take longer for your computer to scan all ports to find PIXEL");
+		System.out.println("<Port of PIXEL> examples:\n" +
+				"\n" +
+			"Windows: COM40\n" +
+			"Mac: tty.usbmodem1412\n" +
+			"Linux/Raspberry Pi: IOIO0");
 		System.out.println("\n");
+		System.out.println("See http://ledpixelart.com/raspberry-pi/ for Rasp Pi setup instructions");
 		System.out.println("Type q to quite this program");
 		//need an option to display all possible gif names
 		
