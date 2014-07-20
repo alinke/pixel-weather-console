@@ -4,14 +4,19 @@ pixel-console version
 A PIXEL console application example. Console meaning java command line based where no GUI is required. 
 This is useful for automating tasks on a dedicated computer like a Raspberry Pi for example. 
 
+This Java program uses the following libraries:
+IOIOLibPC - external
+httpclient-4.3.4.jar - located in the jar folder
+httpcore-4.3.2.jar - located in the jar folder
+
 *** PIXEL: Console Version ***
 
 Usage:
 pixel <options>
 
 Valid options are:
-GIF MODE
 
+GIF MODE
 --gif=your_filename.gif  Send this gif to PIXEL
 --write  Puts PIXEL into write mode, default is streaming mode
 --superpixel  change LED matrix to SUPER PIXEL 64x64
