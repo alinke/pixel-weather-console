@@ -1,8 +1,6 @@
 
 package org.onebeartoe.pixel.hardware;
 
-//import com.ledpixelart.pc.PixelApp;
-
 import ioio.lib.api.AnalogInput;
 import ioio.lib.api.IOIO;
 import ioio.lib.api.RgbLedMatrix;
@@ -39,8 +37,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
-
-//import org.imgscalr.Scalr;
 import org.apache.commons.io.FilenameUtils;
 
 import com.ledpixelart.console.GifDecoder;
@@ -141,16 +137,7 @@ public class Pixel
 			e.printStackTrace();
 		}
     }
-    //*******************************
-
-    /**
-     * Read the input stream into a byte array
-     * @param raw565ImagePath
-     * @throws ConnectionLostException 
-     */
-  
-    
-    
+       
 private int[] getDecodedMetadata(String currentDir, String gifName) {  //not using this one right now
 	
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt";
@@ -906,9 +893,4 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	    //frame_[i] = (short) (((short) 0xFFFFFFFF & 0xFF) | (((short) (short) 0xFFFFFFFF & 0xFF) << 8));  //all white
 	}
     }
-
-	
-
-	
-    
 }
