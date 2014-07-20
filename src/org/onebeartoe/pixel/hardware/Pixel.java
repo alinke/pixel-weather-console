@@ -40,7 +40,7 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-import org.imgscalr.Scalr;
+//import org.imgscalr.Scalr;
 import org.apache.commons.io.FilenameUtils;
 
 import com.ledpixelart.console.GifDecoder;
@@ -137,16 +137,44 @@ public class Pixel
         
         return analogInput2;
     }
+    
+  //*** Al added, this code is to support the SD card and local animations
+    public void interactiveMode() {  //puts PIXEL into interactive mode
+    	try {
+			matrix.interactive();
+		} catch (ConnectionLostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public void writeMode(float frameDelay) {  //puts PIXEL into write mode
+    	try {
+    		 matrix.writeFile(frameDelay); //put PIXEL in write mode
+		} catch (ConnectionLostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public void playLocalMode() {  //tells PIXEL to play the local files
+    	try {
+    		matrix.playFile();
+		} catch (ConnectionLostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    //*******************************
 
     /**
      * Read the input stream into a byte array
      * @param raw565ImagePath
      * @throws ConnectionLostException 
      */
-    public void loadRGB565(String raw565ImagePath) throws ConnectionLostException //old
+    public void loadRGB565Weather(String raw565ImagePath) throws ConnectionLostException 
     {
 	BitmapInputStream = getClass().getClassLoader().getResourceAsStream(raw565ImagePath);
-//	BitmapInputStream = PixelApp.class.getClassLoader().getResourceAsStream(raw565ImagePath);
 
 	try 
 	{   
@@ -172,21 +200,11 @@ public class Pixel
     
     
 private int[] getDecodedMetadata(String currentDir, String gifName) {  //not using this one right now
-    	
-    	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
-    	//String gifNamePath = gifName + ".txt";
+	
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt";
     	
     	File filemeta = new File(gifNamePath);
-    	int[] decodedMetadata = null; //array
-    	
-    	//String selectedFileName = weatherCondition;
-		//String decodedDirPath = "animations/decoded";
-		//String imagePath = decodedDirPath; //animations/decoded/rainx.rgb565
-		//String path = decodedDirPath + "/" + selectedFileName + ".txt"; //animations/decoded/rain.txt , this file tells us fps
-		//InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path); //how to access this file from the jar file
-    	//we first need to read the .txt file and get the meta-data and then we'll decoded and animate
-    	
+    	int[] decodedMetadata = null; //array    	
     	FileInputStream decodedFile = null; //fix this
     	try {
 			decodedFile = new FileInputStream(gifNamePath);
@@ -240,12 +258,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	/*GIFName will be tree
 	GIF Path will be c:\animations\tree.gif
 	decdoed path will be c:\animations\tree.gif\decoded\tree.rgb565 and tree.txt
-	
-	String framestring = "animations/decoded/" + animation_name + ".rgb565";
-	raw565ImagePath = raw565ImagePath + ".txt";
-	File filemeta = new File(raw565ImagePath);
-	
-	current dir = c:\animations*/
+	*/
 	
 	gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	
@@ -275,17 +288,8 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
     public float getDecodedfps(String currentDir, String gifName) {  //need to return the meta data
     	
     	gifName = FilenameUtils.removeExtension(gifName); //with no extension, ex. tree instead of tree.gif
-    	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
-    	//String gifNamePath = gifName + ".txt";
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
     	File filemeta = new File(gifNamePath);
-    	
-    	//String selectedFileName = weatherCondition;
-		//String decodedDirPath = "animations/decoded";
-		//String imagePath = decodedDirPath; //animations/decoded/rainx.rgb565
-		//String path = decodedDirPath + "/" + selectedFileName + ".txt"; //animations/decoded/rain.txt , this file tells us fps
-		//InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path); //how to access this file from the jar file
-    	//we first need to read the .txt file and get the meta-data and then we'll decoded and animate
     	
     	FileInputStream decodedFile = null; //fix this
     	try {
@@ -311,7 +315,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 		    String fileAttribs = line.toString();  //now convert to a string	 
 		    String fdelim = "[,]"; //now parse this string considering the comma split  ie, 32,60
 		    String[] fileAttribs2 = fileAttribs.split(fdelim);
-		    int selectedFileTotalFrames = Integer.parseInt(fileAttribs2[0].trim());
 		    int selectedFileDelay = Integer.parseInt(fileAttribs2[1].trim());	
 		    
 		    if (selectedFileDelay != 0) {  //then we're doing the FPS override which the user selected from settings
@@ -329,15 +332,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
     	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
     	//String gifNamePath = gifName + ".txt";
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
-    	File filemeta = new File(gifNamePath);
-    	
-    	//String selectedFileName = weatherCondition;
-		//String decodedDirPath = "animations/decoded";
-		//String imagePath = decodedDirPath; //animations/decoded/rainx.rgb565
-		//String path = decodedDirPath + "/" + selectedFileName + ".txt"; //animations/decoded/rain.txt , this file tells us fps
-		//InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path); //how to access this file from the jar file
-    	//we first need to read the .txt file and get the meta-data and then we'll decoded and animate
-    	
+    	File filemeta = new File(gifNamePath);    	
     	FileInputStream decodedFile = null; //fix this
     	try {
 			decodedFile = new FileInputStream(gifNamePath);
@@ -363,7 +358,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 		    String fdelim = "[,]"; //now parse this string considering the comma split  ie, 32,60
 		    String[] fileAttribs2 = fileAttribs.split(fdelim);
 		    int selectedFileTotalFrames = Integer.parseInt(fileAttribs2[0].trim());
-		    int selectedFileDelay = Integer.parseInt(fileAttribs2[1].trim());	
 		  
 		   return (selectedFileTotalFrames);
 	}
@@ -375,13 +369,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	   // String gifNamePath = gifName + ".txt";
 	    String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
     	File filemeta = new File(gifNamePath);
-    	
-    	//String selectedFileName = weatherCondition;
-		//String decodedDirPath = "animations/decoded";
-		//String imagePath = decodedDirPath; //animations/decoded/rainx.rgb565
-		//String path = decodedDirPath + "/" + selectedFileName + ".txt"; //animations/decoded/rain.txt , this file tells us fps
-		//InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path); //how to access this file from the jar file
-    	//we first need to read the .txt file and get the meta-data and then we'll decoded and animate
     	
     	FileInputStream decodedFile = null; //fix this
     	try {
@@ -407,8 +394,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 		    String fileAttribs = line.toString();  //now convert to a string	 
 		    String fdelim = "[,]"; //now parse this string considering the comma split  ie, 32,60,32  where last 32 is the resolution
 		    String[] fileAttribs2 = fileAttribs.split(fdelim);
-		    int selectedFileTotalFrames = Integer.parseInt(fileAttribs2[0].trim()); //the first item in the array
-		    int selectedFileDelay = Integer.parseInt(fileAttribs2[1].trim());
 		    int resolution = Integer.parseInt(fileAttribs2[2].trim());	
 		  
 		   return (resolution);
@@ -418,19 +403,9 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
     	
     	
     	gifName = FilenameUtils.removeExtension(gifName); //with no extension
-    	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
-    	//String gifNamePath = gifName + ".txt";
-    	
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
     	
     	File filemeta = new File(gifNamePath);
-    	
-    	//String selectedFileName = weatherCondition;
-		//String decodedDirPath = "animations/decoded";
-		//String imagePath = decodedDirPath; //animations/decoded/rainx.rgb565
-		//String path = decodedDirPath + "/" + selectedFileName + ".txt"; //animations/decoded/rain.txt , this file tells us fps
-		//InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path); //how to access this file from the jar file
-    	//we first need to read the .txt file and get the meta-data and then we'll decoded and animate
     	
     	FileInputStream decodedFile = null; //fix this
     	try {
@@ -456,7 +431,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 		    String fileAttribs = line.toString();  //now convert to a string	 
 		    String fdelim = "[,]"; //now parse this string considering the comma split  ie, 32,60
 		    String[] fileAttribs2 = fileAttribs.split(fdelim);
-		    int selectedFileTotalFrames = Integer.parseInt(fileAttribs2[0].trim());
 		    int selectedFileDelay = Integer.parseInt(fileAttribs2[1].trim());
 
 		   return (selectedFileDelay);
@@ -625,8 +599,8 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	          	          
 	          for (int i = 0; i < numFrames; i++) { //loop through all the frames
 	             BufferedImage rotatedFrame = d.getFrame(i);  
-	             rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.CW_90, null);
-	             rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.FLIP_HORZ, null);
+	            // rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.CW_90, null); //fixed bug, no longer need to rotate the image
+	            // rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.FLIP_HORZ, null); //fixed bug, no longer need to flip the image
 	             
 	             // These worked too but using the scalr library gives quicker results
 	             //rotatedFrame = getFlippedImage(rotatedFrame); //quick hack, for some reason the code below i think is flipping the image so we have to flip it here as a hack
@@ -663,18 +637,10 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                for (x=0 ; x < pixelMatrix_width; x++) {
 	                    for (y=0; y < pixelMatrix_height; y++) {
 
-	                        Color c = new Color(sendImg.getRGB(x, y));
-	                        int aRGBpix = sendImg.getRGB(x, y);
-	                        int alpha;
+	                        Color c = new Color(sendImg.getRGB(y, x));  // x and y were switched in the original code which was causing the image to rotate by 90 degrees and was flipped horizontally, switching x and y fixes this bug
 	                        int red = c.getRed();
 	                        int green = c.getGreen();
 	                        int blue = c.getBlue();
-
-	                        /*//RGB888
-	                        red = (aRGBpix >> 16) & 0x0FF;
-	                        green = (aRGBpix >> 8) & 0x0FF;
-	                        blue = (aRGBpix >> 0) & 0x0FF; 
-	                        alpha = (aRGBpix >> 24) & 0x0FF;*/
 
 	                        //RGB565
 	                        red = red >> 3;
@@ -690,8 +656,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                        int pixel_to_send_int = 0;
 	                        pixel_to_send_int = (red << 11) | (green << 5) | (blue);
 	                        pixel_to_send = (short) pixel_to_send_int;
-
-
 	                        //dividing into bytes
 	                        byte byteH=(byte)((pixel_to_send >> 8) & 0x0FF);
 	                        byte byteL=(byte)(pixel_to_send & 0x0FF);
@@ -761,7 +725,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
      fos.close();
   }
   
-  public static BufferedImage getScaledImage(BufferedImage image, int width, int height) throws IOException {
+  public static BufferedImage getScaledImage(BufferedImage image, int width, int height) throws IOException { //resizes our image and preserves hard edges which we need for pixel art
 	    int imageWidth  = image.getWidth();
 	    int imageHeight = image.getHeight();
 
@@ -775,7 +739,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	        new BufferedImage(width, height, image.getType()));
 	}
   
-  public static BufferedImage getFlippedImage(BufferedImage bi) {
+  /*public static BufferedImage getFlippedImage(BufferedImage bi) { //we're not using
       BufferedImage flipped = new BufferedImage(
               bi.getWidth(),
               bi.getHeight(),
@@ -793,7 +757,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
   }
   
   
-  private BufferedImage rotate90ToLeft( BufferedImage inputImage ){
+  private BufferedImage rotate90ToLeft( BufferedImage inputImage ){  //we're not using
 		//The most of code is same as before
 			int width = inputImage.getWidth();
 			int height = inputImage.getHeight();
@@ -848,7 +812,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 		return returnImage;
 	//and the last return the rotated image
 
-	}
+	}*/
     
     
     private void loadRGB565PNG() throws ConnectionLostException //not using this one
@@ -867,34 +831,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	}
     }
     
-    //*** Al added, this code is to support the SD card and local animations
-    public void interactiveMode() {  //puts PIXEL into interactive mode
-    	try {
-			matrix.interactive();
-		} catch (ConnectionLostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    
-    public void writeMode(float frameDelay) {  //puts PIXEL into write mode
-    	try {
-    		 matrix.writeFile(frameDelay); //put PIXEL in write mode
-		} catch (ConnectionLostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    
-    public void playLocalMode() {  //tells PIXEL to play the local files
-    	try {
-    		matrix.playFile();
-		} catch (ConnectionLostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    //*******************************
     
     private void writeImagetoMatrix(BufferedImage originalImage) throws ConnectionLostException  //not using this one right now    
     {        
@@ -907,7 +843,8 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
             //the image is not the right dimensions, ie, 32px by 32px				
             BufferedImage ResizedImage = new BufferedImage(KIND.width, KIND.height, originalImage.getType());
             Graphics2D g = ResizedImage.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            //g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             g.drawImage(originalImage, 0, 0, KIND.width, KIND.height, 0, 0, originalImage.getWidth(), originalImage.getHeight(), null);
             g.dispose();
             originalImage = ResizedImage;		
