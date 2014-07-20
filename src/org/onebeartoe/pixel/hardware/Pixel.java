@@ -55,15 +55,10 @@ check that the resolution in the decoded file matches the resolution of the curr
 If no or if the files don't exist, then call the decodeGIF method to re-encode
 
 decodeGIF - will decode the gif into a raw rgb565 and corresponding txt metadata file
-
-
-
-*
 */
 
-
 /**
- * @author rmarquez
+ * @author rmarquez and Al Linke
  */
 public class Pixel 
 {
@@ -117,26 +112,7 @@ public class Pixel
         
         return analogInput1;
     }
-    
-    public static AnalogInput getAnalogInput1() 
-    {
-        if (analogInput1 == null) 
-	{
-	    analogInput1 = getAnalogInput(31);			    
-        }
-        
-        return analogInput1;
-    }
-    
-    public static AnalogInput getAnalogInput2() 
-    {
-        if (analogInput2 == null) 
-	{
-	    analogInput2 = getAnalogInput(32);
-        }
-        
-        return analogInput2;
-    }
+   
     
   //*** Al added, this code is to support the SD card and local animations
     public void interactiveMode() {  //puts PIXEL into interactive mode
@@ -172,31 +148,7 @@ public class Pixel
      * @param raw565ImagePath
      * @throws ConnectionLostException 
      */
-    public void loadRGB565Weather(String raw565ImagePath) throws ConnectionLostException 
-    {
-	BitmapInputStream = getClass().getClassLoader().getResourceAsStream(raw565ImagePath);
-
-	try 
-	{   
-	    int n = BitmapInputStream.read(BitmapBytes, 0, BitmapBytes.length);
-	    Arrays.fill(BitmapBytes, n, BitmapBytes.length, (byte) 0);
-	} 
-	catch (IOException e) 
-	{
-	    System.err.println("An error occured while trying to load " + raw565ImagePath + ".");
-	    System.err.println("Make sure " + raw565ImagePath + "is included in the executable JAR.");
-	    e.printStackTrace();
-	}
-
-	int y = 0;
-	for (int f = 0; f < frame_.length; f++) 
-	{
-	    frame_[f] = (short) (((short) BitmapBytes[y] & 0xFF) | (((short) BitmapBytes[y + 1] & 0xFF) << 8));
-	    y = y + 2;
-	}
-//        matrix = PixelApp.getMatrix();
-	matrix.frame(frame_);
-    }
+  
     
     
 private int[] getDecodedMetadata(String currentDir, String gifName) {  //not using this one right now
@@ -813,6 +765,52 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	//and the last return the rotated image
 
 	}*/
+  
+  public static AnalogInput getAnalogInput1() 
+  {
+      if (analogInput1 == null) 
+	{
+	    analogInput1 = getAnalogInput(31);			    
+      }
+      
+      return analogInput1;
+  }
+  
+  public static AnalogInput getAnalogInput2() 
+  {
+      if (analogInput2 == null) 
+	{
+	    analogInput2 = getAnalogInput(32);
+      }
+      
+      return analogInput2;
+  }
+  
+  public void loadRGB565Weather(String raw565ImagePath) throws ConnectionLostException //to do clean this up later, these are still using the rgb565 as single files
+  {
+	BitmapInputStream = getClass().getClassLoader().getResourceAsStream(raw565ImagePath);
+
+	try 
+	{   
+	    int n = BitmapInputStream.read(BitmapBytes, 0, BitmapBytes.length);
+	    Arrays.fill(BitmapBytes, n, BitmapBytes.length, (byte) 0);
+	} 
+	catch (IOException e) 
+	{
+	    System.err.println("An error occured while trying to load " + raw565ImagePath + ".");
+	    System.err.println("Make sure " + raw565ImagePath + "is included in the executable JAR.");
+	    e.printStackTrace();
+	}
+
+	int y = 0;
+	for (int f = 0; f < frame_.length; f++) 
+	{
+	    frame_[f] = (short) (((short) BitmapBytes[y] & 0xFF) | (((short) BitmapBytes[y + 1] & 0xFF) << 8));
+	    y = y + 2;
+	}
+//      matrix = PixelApp.getMatrix();
+	matrix.frame(frame_);
+  }
     
     
     private void loadRGB565PNG() throws ConnectionLostException //not using this one
