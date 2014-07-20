@@ -59,7 +59,7 @@ public class PIXELConsole extends IOIOConsoleApp {
      
 	public static final Pixel pixel = new Pixel(KIND);
 	
-	private static int selectedFileResolution = 2048; //hard coded this for now
+	private static int selectedFileResolution = 2048; 
 	 
 	public static String pixelFirmware = "Not Found";
 	 
@@ -147,37 +147,43 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static int currentResolution;
     
+    private static int ledMatrixType = 3; //we'll default to PIXEL 32x32 and change this is a command line option is entered specifying otherwise
+    
     
 	private static enum Command {
 		VERSIONS, FINGERPRINT, WRITE
 	}
   	
   	private static void printUsage() {
-		System.err.println("PIXEL: Console Version");
-		System.err.println();
-		System.err.println("Usage:");
-		System.err.println("pixel <options>");
-		System.err.println();
-		System.err.println("Valid options are:");
-		System.err.println("********* Weather  **********");
-		System.err
+		System.out.println("PIXEL: Console Version");
+		System.out.println();
+		System.out.println("Usage:");
+		System.out.println("pixel <options>");
+		System.out.println();
+		System.out.println("Valid options are:");
+		System.out.println("********* Weather  **********");
+		System.out
 				.println("--zip=your_zip_code Non-US users should use woeid");
-		System.err
+		System.out
 				.println("--woeid=your_woeid_code A numeric number that Yahoo uses to designate your location");
-		System.err
+		System.out
 				.println("--forecast Displays tomorrow's weather conditions, defaults to current weather conditions if not specified");
-		System.err.println("********* OR  Pre-loaded GIFs **********");
-		System.err
+		System.out.println("********* OR  Pre-loaded GIFs **********");
+		System.out
 		.println("--list  Displays names of all the pre-loaded GIFs");
-		System.err
+		System.out
 		.println("--gifp=your_filename.gif  Send this gif to PIXEL");
-		System.err
+		System.out
 		.println("--write  Puts PIXEL into write mode, default is streaming mode");
-		System.err.println("********* OR  User Supplied / External GIFs **********");
-		System.err
+		System.out.println("********* OR  User Supplied / External GIFs **********");
+		System.out
 		.println("--gif=your_filename.gif  Send this gif to PIXEL");
-		System.err
+		System.out
 		.println("--write  Puts PIXEL into write mode, default is streaming mode");
+		System.out
+		.println("--superpixel  change LED matrix type to SUPER PIXEL's 64x64");
+		System.out
+		.println("--16x32  change LED matrix type Adafruit's 16x32");
 		//need an option to display all possible gif names
 		
 	}
@@ -255,7 +261,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 			}	
 			
 			if (arg.startsWith("--image=")) {
-			//	gifFileName_ = arg.substring(6);
 				System.out.println("gif file name: " + gifFileName_);
 				gifModeExternal = true;
 				validCommandLine = true;
@@ -265,6 +270,16 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--write")) {
 				writeMode = true;
 				System.out.println("PIXEL is in write mode\n");
+			}
+			
+			if (arg.startsWith("--16x32")) {
+				ledMatrixType = 1;
+				System.out.println("16x32 LED matrix has been selected");
+			}
+			
+			if (arg.startsWith("--superpixel")) {
+				ledMatrixType = 10;
+				System.out.println("SUPER PIXEL selected");
 			}
 			
 			if (arg.startsWith("--zip=")) {
@@ -282,6 +297,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 				weatherMode = true;
 				z++;
 			}
+			
+			//setupEnvironment();
 			
 			if (validCommandLine == false) {
 				throw new BadArgumentsException("Unexpected option: " + arg);
@@ -582,7 +599,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 
 	    	               		//pixel.loadRGB565(framestring);
 	    	               		// pixel.SendPixelDecodedFrame(framestring, i, GIFnumFrames, GIFresolution);
-	    	               		 pixel.SendPixelDecodedFrame(currentDir, selectedFileName, i, GIFnumFrames, GIFresolution);
+	    	               		 pixel.SendPixelDecodedFrame(currentDir, selectedFileName, i, GIFnumFrames, GIFresolution,KIND.width,KIND.height);
 	    	               	
 	    	      
 	                    }
@@ -620,7 +637,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 		GIFfps = pixel.getDecodedfps(currentDir, gifFileName_); //get the fps
 	    GIFnumFrames = pixel.getDecodednumFrames(currentDir, gifFileName_);
-	    GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, gifFileName_);  // to do fix
+	    GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, gifFileName_);  
 	    GIFresolution = pixel.getDecodedresolution(currentDir, gifFileName_);
 	    
 	    System.out.println(gifFileName_ + " contains " + GIFnumFrames + " total frames, a " + GIFselectedFileDelay + "ms frame delay or " + GIFfps + " frames per second and a resolution of " + GIFresolution);
@@ -646,10 +663,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				 		
 	    				 			//framestring = "animations/decoded/" + animation_name + ".rgb565";
 	    				 			//System.out.println("Writing to PIXEL: Frame " + y + "of " + GIFnumFrames + " Total Frames");
-	
-	    				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, y, GIFnumFrames, GIFresolution);
+
+	    			    			System.out.println("Writing " + gifFileName_ + " to PIXEL " + "frame " + y);
+	    				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, y, GIFnumFrames, GIFresolution, KIND.width,KIND.height);
 	    				   	  } //end for loop
 	    					pixel.playLocalMode(); //now tell PIXEL to play locally
+	    					System.out.println("Writing " + gifFileName_ + " to PIXEL complete, now displaying...");
 	    			}
 	    			else {   //we're not writing so let's just stream
 	            
@@ -672,7 +691,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 
 	    	               		//pixel.loadRGB565(framestring);
 	    	               		// pixel.SendPixelDecodedFrame(framestring, i, GIFnumFrames, GIFresolution);
-	    	               		 pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, GIFnumFrames, GIFresolution);
+	    	               		 pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, GIFnumFrames, GIFresolution, KIND.width,KIND.height);
  	                    }
  	                };
 	    				   
@@ -767,7 +786,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               		System.out.println("framestring: " + framestring);
 
 									//pixel.loadRGB565(framestring);
-									pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, numFrames, selectedFileResolution);
+									pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, numFrames, selectedFileResolution,KIND.width,KIND.height);
 							
 	    	               		// pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, numFrames, selectedFileResolution);
 	    	      
@@ -805,7 +824,7 @@ public class PIXELConsole extends IOIOConsoleApp {
  			System.out.println("writing to PIXEL frame: " + framestring);
 
  		//  pixel.loadRGB565(framestring);
- 		   pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, numFrames, selectedFileResolution);
+ 		   pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, numFrames, selectedFileResolution,KIND.width,KIND.height);
    	  } //end for loop
      	 
      }
@@ -819,73 +838,70 @@ public class PIXELConsole extends IOIOConsoleApp {
 	        }        
 	    }
 	 
-	 private void setupEnvironment() {
+	 private static void setupEnvironment() {
 		 
-		// currentDir = "c:\\deleteme";
-		 
-		 int matrix_model = 3;
-		 
-		 
-		 switch (matrix_model) {  //get this from the preferences
-	     case 0:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x16;
-	    	 frame_length = 1048;
-	    	 currentResolution = 16;
-	    	 break;
-	     case 1:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x16;
-	    	 frame_length = 1048;
-	    	 currentResolution = 16;
-	    	 break;
-	     case 2:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32_NEW; //v1
-	    	 frame_length = 2048;
-	    	 currentResolution = 32;
-	    	 break;
-	     case 3:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32; //v2
-	    	 frame_length = 2048;
-	    	 currentResolution = 32;
-	    	 break;
-	     case 4:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_64x32;
-	    	 frame_length = 8192;
-	    	 currentResolution = 64; 
-	    	 break;
-	     case 5:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x64; 
-	    	 frame_length = 8192;
-	    	 currentResolution = 64; 
-	    	 break;	 
-	     case 6:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_2_MIRRORED; 
-	    	 frame_length = 8192;
-	    	 currentResolution = 64; 
-	    	 break;	 	 
-	     case 7:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_4_MIRRORED;
-	    	 frame_length = 8192;
-	    	 currentResolution = 128; 
-	     case 8:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_128x32; //horizontal
-	    	 frame_length = 8192;
-	    	 currentResolution = 128;  
-	    	 break;	 
-	     case 9:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x128; //vertical mount
-	    	 frame_length = 8192;
-	    	 currentResolution = 128; 
-	    	 break;	 
-	     case 10:
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_64x64;
-	    	 frame_length = 8192;
-	    	 currentResolution = 128; 
-	    	 break;	 	 		 
-	     default:	    		 
-	    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32; //v2 as the default
-	    	 frame_length = 2048;
-	    	 currentResolution = 32;
+		 switch (ledMatrixType) { 
+		     case 0:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x16;
+		    	 frame_length = 1048;
+		    	 currentResolution = 16;
+		    	 break;
+		     case 1:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x16;
+		    	 frame_length = 1048;
+		    	 currentResolution = 16;
+		    	 break;
+		     case 2:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32_NEW; //an early version of the PIXEL LED panels, only used in a few early prototypes
+		    	 frame_length = 2048;
+		    	 currentResolution = 32;
+		    	 break;
+		     case 3:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32; //the current version of PIXEL 32x32
+		    	 frame_length = 2048;
+		    	 currentResolution = 32;
+		    	 break;
+		     case 4:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_64x32;
+		    	 frame_length = 8192;
+		    	 currentResolution = 64; 
+		    	 break;
+		     case 5:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x64; 
+		    	 frame_length = 8192;
+		    	 currentResolution = 64; 
+		    	 break;	 
+		     case 6:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_2_MIRRORED; 
+		    	 frame_length = 8192;
+		    	 currentResolution = 64; 
+		    	 break;	 	 
+		     case 7:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_4_MIRRORED;
+		    	 frame_length = 8192;
+		    	 currentResolution = 128; 
+		     case 8:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_128x32; //horizontal
+		    	 frame_length = 8192;
+		    	 currentResolution = 128;  
+		    	 break;	 
+		     case 9:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x128; //vertical mount
+		    	 frame_length = 8192;
+		    	 currentResolution = 128; 
+		    	 break;	 
+		     case 10:
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_64x64;
+		    	 frame_length = 8192;
+		    	 currentResolution = 128; 
+		    	 break;	 	 		 
+		     default:	    		 
+		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32; //v2 as the default
+		    	 frame_length = 2048;
+		    	 currentResolution = 32;
 	     }
+		 
+		 System.out.println("went to setup & currentResolution is: " + currentResolution + "\n");
 	 }
 
 	@Override
@@ -896,26 +912,25 @@ public class PIXELConsole extends IOIOConsoleApp {
 			@Override
 			protected void setup() throws ConnectionLostException,
 					InterruptedException {
-				//led_ = ioio_.openDigitalOutput(IOIO.LED_PIN, true);
-		    	
 		    	//**** let's get IOIO version info for the About Screen ****
 	  			pixelFirmware = ioio_.getImplVersion(v.APP_FIRMWARE_VER);
-	  			//pixelBootloader = ioio_.getImplVersion(v.BOOTLOADER_VER);
 	  			pixelHardwareID = ioio_.getImplVersion(v.HARDWARE_VER);
+	  			//pixelBootloader = ioio_.getImplVersion(v.BOOTLOADER_VER);
 	  			//IOIOLibVersion = ioio_.getImplVersion(v.IOIOLIB_VER);
 	  			//**********************************************************
-		    	
-	  			//	led_ = ioio_.openDigitalOutput(IOIO.LED_PIN, true);
-	  				PIXELConsole.this.ioiO = ioio_;
-	                pixel.matrix = ioio_.openRgbLedMatrix(pixel.KIND);
-	                pixel.ioiO = ioio_;
-	                
-		
-			System.out.println("Found PIXEL: " + pixel.matrix + "\n");
+	  			
+  				PIXELConsole.this.ioiO = ioio_;
+  				
+  				setupEnvironment();  //here we set the PIXEL LED matrix type
+  				
+                //pixel.matrix = ioio_.openRgbLedMatrix(pixel.KIND);   //AL could not make this work, did a quick hack, Roberto probably can change back to the right way
+                pixel.matrix = ioio_.openRgbLedMatrix(KIND);
+                pixel.ioiO = ioio_;
+                System.out.println("Found PIXEL: " + pixel.matrix + "\n");
 			
 			//need to add if statements here, what happens if they choose weather and gif
 			
-			setupEnvironment();
+			//setupEnvironment();
 			
 			if (gifModeExternal == true) {
 				
