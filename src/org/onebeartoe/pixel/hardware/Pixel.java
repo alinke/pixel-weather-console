@@ -411,7 +411,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 			int frame_length;
 			
 			 switch (selectedFileResolution) {
-	            case 16: frame_length = 1048;
+	            case 16: frame_length = 1024;
 	                     break;
 	            case 32: frame_length = 2048;
 	                     break;
@@ -817,20 +817,23 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
     }
     
     
-    private void writeImagetoMatrix(BufferedImage originalImage) throws ConnectionLostException  //not using this one right now    
+    public void writeImagetoMatrix(BufferedImage originalImage, int frameWidth, int frameHeight) throws ConnectionLostException  //not using this one right now    
     {        
 	//here we'll take a PNG, BMP, or whatever and convert it to RGB565 via a canvas, also we'll re-size the image if necessary
-        int width_original = originalImage.getWidth();
+    	BitmapBytes = new byte[frameWidth * frameHeight * 2]; 
+		frame_ = new short[frameWidth * frameHeight];
+    	
+    	int width_original = originalImage.getWidth();
         int height_original = originalImage.getHeight();
 
-        if (width_original != KIND.width || height_original != KIND.height) 
+        if (width_original != frameWidth || height_original != frameHeight) 
         {  
             //the image is not the right dimensions, ie, 32px by 32px				
-            BufferedImage ResizedImage = new BufferedImage(KIND.width, KIND.height, originalImage.getType());
+            BufferedImage ResizedImage = new BufferedImage(frameWidth, frameHeight, originalImage.getType());
             Graphics2D g = ResizedImage.createGraphics();
             //g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(originalImage, 0, 0, KIND.width, KIND.height, 0, 0, originalImage.getWidth(), originalImage.getHeight(), null);
+            g.drawImage(originalImage, 0, 0, frameWidth, frameHeight, 0, 0, originalImage.getWidth(), originalImage.getHeight(), null);
             g.dispose();
             originalImage = ResizedImage;		
         }
@@ -839,9 +842,9 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
         int i = 0;
         int j = 0;
 
-        for (i = 0; i < KIND.height; i++) 
+        for (i = 0; i < frameHeight; i++) 
         {
-            for (j = 0; j < KIND.width; j++) 
+            for (j = 0; j < frameWidth; j++) 
             {
                 Color c = new Color(originalImage.getRGB(j, i));  //i and j were reversed which was rotationg the image by 90 degrees
 //                int aRGBpix = originalImage.getRGB(j, i);  //i and j were reversed which was rotationg the image by 90 degrees

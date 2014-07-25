@@ -9,6 +9,10 @@ import ioio.lib.util.IOIOConnectionManager.Thread;
 import ioio.lib.util.IOIOLooper;
 import ioio.lib.util.pc.IOIOConsoleApp;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -17,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -151,6 +157,23 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static int ledMatrixType = 3; //we'll default to PIXEL 32x32 and change this is a command line option is entered specifying otherwise
     
+    private static int x;
+    
+    private static int scrollingTextDelay_ = 5;
+    
+    private static String scrollingText_;
+    
+    private static boolean scrollingTextMode = false;
+    
+    private static String scrollingTextSpeed_;
+    
+    private static int scrollingTextFontSize_ = 30; //default the scrolling text font to 30
+    
+    private static String scrollingTextFontSizeString;
+    
+    private static String scrollingTextColor_ = "red";
+    
+    private static Color textColor;
     
 	private static enum Command {
 		VERSIONS, FINGERPRINT, WRITE
@@ -175,6 +198,19 @@ public class PIXELConsole extends IOIOConsoleApp {
 		.println("--16x32  change LED matrix to Adafruit's 16x32 LED matrix");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --gif=tree.gif");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --gif=tree.gif --superpixel --write");
+		
+		System.out.println("\n");
+		System.out.println("SCROLLING TEXT MODE");
+		System.out.println();
+		System.out
+		.println("--text=\"your scrolling text\"    Make sure to enclose your text in double quotes");
+		System.out
+		.println("--speed=<number>  How fast to scroll, default value is 10. Lower is faster.");
+		System.out
+		.println("--fontsize=<number>  Default size is 30");
+		System.out
+		.println("--color=<color>    Supported colors are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
 		
 		System.out.println("\n");
 		System.out.println("WEATHER MODE");
@@ -269,6 +305,31 @@ public class PIXELConsole extends IOIOConsoleApp {
 				gifModeExternal = true;
 				validCommandLine = true;
 				z++;
+			}	
+			
+			if (arg.startsWith("--text=")) {
+				scrollingText_ = arg.substring(7);
+				System.out.println("Scrolling Text Mode Selected");
+				scrollingTextMode = true;
+				validCommandLine = true;
+				z++;
+			}	
+			
+			if (arg.startsWith("--speed=")) {
+				scrollingTextSpeed_ = arg.substring(8);
+				//System.out.println("scrolling text speed: " + scrollingTextSpeed_);
+				scrollingTextDelay_ = Integer.parseInt(scrollingTextSpeed_);
+			}	
+			
+			if (arg.startsWith("--fontsize=")) {
+				scrollingTextFontSizeString = arg.substring(11);
+				//System.out.println("font size is: " + scrollingTextFontSizeString);
+				scrollingTextFontSize_ = Integer.parseInt(scrollingTextFontSizeString);
+			}	
+			
+			if (arg.startsWith("--color=")) {
+				scrollingTextColor_ = arg.substring(8);
+				//System.out.println("scrolling text color is: " + scrollingTextFontSizeString);
 			}	
 			
 			if (arg.startsWith("--image=")) {
@@ -431,6 +492,184 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    			}    
 		
 	      }
+	 
+	 private static void scrollText(final String scrollingText, boolean writeMode) 
+	    {
+		 
+		 stopExistingTimer(); //is this needed, probably not
+			
+			if (pixelHardwareID.substring(0,4).equals("PIXL") && writeMode == true) {  //in write mode, we don't need a timer because we don't need a delay in between frames, we will first put PIXEL in write mode and then send all frames at once
+					//pixel.interactiveMode();
+					//float textFPS = 1000.f / scrollingTextDelay_;
+					//pixel.writeMode(textFPS); //need to tell PIXEL the frames per second to use, how fast to play the animations
+					//System.out.println("Now writing to PIXEL's SD card, the screen will go blank until writing has been completed..."); 
+					System.out.println("Sorry, writing scrolling text is not yet supported..."); 
+					/*  int y;
+				    	 
+				   	  //for (y=0;y<numFrames-1;y++) { //let's loop through and send frame to PIXEL with no delay
+				      for (y=0;y<GIFnumFrames;y++) { //Al removed the -1, make sure to test that!!!!!
+				 		
+				 			//framestring = "animations/decoded/" + animation_name + ".rgb565";
+				 			//System.out.println("Writing to PIXEL: Frame " + y + "of " + GIFnumFrames + " Total Frames");
+
+			    			System.out.println("Writing " + gifFileName_ + " to PIXEL " + "frame " + y);
+				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, y, GIFnumFrames, GIFresolution, KIND.width,KIND.height);
+				   	  } //end for loop
+*/					//pixel.playLocalMode(); //now tell PIXEL to play locally
+					//System.out.println("Writing " + gifFileName_ + " to PIXEL complete, now displaying...");
+			}
+			else {   //we're not writing so let's just stream
+		 
+		 
+	            stopExistingTimer(); //is this needed, probably no
+	    				   
+	    				   ActionListener ScrollingTextTimer = new ActionListener() {
+
+	    	                    public void actionPerformed(ActionEvent actionEvent) {
+	    	                    
+	    	                    	//delay = 5;	
+	    	                    	//scrollingTextDelay_ = 710 - scrollingTextDelay_;                            // al linke: added this so the higher slider value means faster scrolling
+	    	                   	    
+	    	                   	  //  ScrollingTextPanel.this.timer.setDelay(delay);
+	    	                   	    
+	    	                               int w = 64 * KIND.width/32;
+	    	                               int h = 64*  KIND.height/32;
+	    	                   	    
+	    	                               BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+	    	                               
+	    	                               //let's set the text color
+	    	                               if (scrollingTextColor_.equals("red")) {
+	    	                            	   textColor = Color.RED;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("green")) {
+	    	                            	   textColor = Color.GREEN;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("blue")) {
+	    	                            	   textColor = Color.BLUE;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("cyan")) {
+	    	                            	   textColor = Color.CYAN;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("gray")) {
+	    	                            	   textColor = Color.GRAY;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("magenta") || scrollingTextColor_.equals("purple")) {
+	    	                            	   textColor = Color.MAGENTA;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("orange")) {
+	    	                            	   textColor = Color.ORANGE;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("pink")) {
+	    	                            	   textColor = Color.PINK;
+	    	                               }
+	    	                               else if (scrollingTextColor_.equals("yellow")) {
+	    	                            	   textColor = Color.YELLOW;
+	    	                               }
+	    	                               
+	    	                              // Color textColor = colorPanel.getBackground();
+	    	                               //Color myColor = new Color (246, 27, 27)
+	    	                   	    
+	    	                               Graphics2D g2d = img.createGraphics();
+	    	                               g2d.setPaint(textColor);
+	    	                               
+	    	                              // Font tr = new Font("TimesRoman", Font.PLAIN, scrollingTextFontSize_);
+	    	                               Font tr = new Font("Arial", Font.PLAIN, scrollingTextFontSize_);
+	    	                              // Font trb = new Font("TimesRoman", Font.BOLD, scrollingTextFontSize_);
+	    	                              // Font tri = new Font("TimesRoman", Font.ITALIC, scrollingTextFontSize_);
+	    	                               
+	    	                               //String fontFamily = fontFamilyChooser.getSelectedItem().toString();
+	    	                               
+	    	                              /* Font font = fonts.get(fontFamily);
+	    	                               if(font == null)
+	    	                               {
+	    	                                   font = new Font(fontFamily, Font.PLAIN, 32);
+	    	                                   fonts.put(fontFamily, font);
+	    	                               }    */        
+	    	                               
+	    	                               g2d.setFont(tr);
+	    	                               
+	    	                              String message = scrollingText;
+	    	                               //String message = "hard code test";
+	    	                               
+	    	                               FontMetrics fm = g2d.getFontMetrics();
+	    	                               
+	    	                               int y = fm.getHeight();   
+	    	                               y = y * KIND.height/32;
+	    	                              // System.out.println("font height: " + y);
+
+	    	                               try 
+	    	                               {
+	    	                                   additionalBackgroundDrawing(g2d);
+	    	                               } 
+	    	                               catch (Exception ex) 
+	    	                               {
+	    	                                  // Logger.getLogger(ScrollingTextPanel.class.getName()).log(Level.SEVERE, null, ex);
+	    	                               }
+	    	                               
+	    	                               g2d.drawString(message, x, y);
+	    	                               
+	    	                               try 
+	    	                               {
+	    	                                   additionalForegroundDrawing(g2d);
+	    	                               } 
+	    	                               catch (Exception ex) 
+	    	                               {
+	    	                                   //Logger.getLogger(ScrollingTextPanel.class.getName()).log(Level.SEVERE, null, ex);
+	    	                               }
+	    	                               
+	    	                               g2d.dispose();
+
+	    	                               if(pixel != null)
+	    	                               {
+	    	                                   try 
+	    	                                   {  
+	    	                                       pixel.writeImagetoMatrix(img,KIND.width,KIND.height);
+	    	                                   } 
+	    	                                   catch (ConnectionLostException ex) 
+	    	                                   {
+	    	                                       //Logger.getLogger(ScrollingTextPanel.class.getName()).log(Level.SEVERE, null, ex);
+	    	                                   }                
+	    	                               }
+	    	                                           
+	    	                               int messageWidth = fm.stringWidth(message);            
+	    	                               int resetX = 0 - messageWidth;
+	    	                               
+	    	                               if(x == resetX)
+	    	                               {
+	    	                                   x = w;
+	    	                               }
+	    	                               else
+	    	                               {
+	    	                                   x--;
+	    	                               }
+	                    }
+	                };
+	    				   
+	    				   
+	    				   timer = new Timer(scrollingTextDelay_, ScrollingTextTimer); //the timer calls this function per the interval of fps
+	    				   timer.start();
+	    	}    
+	    }
+	      
+	 
+	 /**
+	     * Override this to perform any additional background drawing on the image that get sent to the PIXEL
+	     * @param g2d 
+	     */
+	    protected static void additionalBackgroundDrawing(Graphics2D g2d) throws Exception
+	    {
+	        
+	    }    
+	    
+	    /**
+	     * Override this to perform any additional foreground drawing on the image that get sent to the PIXEL
+	     * @param g2d 
+	     */
+	    protected static void additionalForegroundDrawing(Graphics2D g2d) throws Exception
+	    {
+	        
+	    }
+	
 	
 	
 	 private static void runWeatherAnimations() 
@@ -584,12 +823,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 		 switch (ledMatrixType) { 
 		     case 0:
 		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x16;
-		    	 frame_length = 1048;
+		    	 frame_length = 1024;
 		    	 currentResolution = 16;
 		    	 break;
 		     case 1:
 		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x16;
-		    	 frame_length = 1048;
+		    	 frame_length = 1024;
 		    	 currentResolution = 16;
 		    	 break;
 		     case 2:
@@ -948,20 +1187,24 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			//setupEnvironment();
 			
-			if (gifModeExternal == true) {
+				if (gifModeExternal == true) {
+					
+					if (writeMode == true) {
+						streamGIF(true); //write to PIXEL's SD card
+					}
+					else {
+						streamGIF(false);  //steam the GIF but don't write
+					}
+				}
 				
-				if (writeMode == true) {
-					streamGIF(true); //write to PIXEL's SD card
+				else if (weatherMode == true){
+					getWeather();
+					runWeatherAnimations();
 				}
-				else {
-					streamGIF(false);  //steam the GIF but don't write
+				
+				else if (scrollingTextMode == true) {
+					scrollText(scrollingText_, writeMode); //write or stream
 				}
-			}
-			else {
-				getWeather();
-				//writeImage(); //change this to animate
-				runWeatherAnimations();
-			}
 			
 			}
 
