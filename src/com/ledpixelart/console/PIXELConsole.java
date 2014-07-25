@@ -159,7 +159,7 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static int x;
     
-    private static int scrollingTextDelay_ = 5;
+    private static int scrollingTextDelay_ = 10;
     
     private static String scrollingText_;
     
@@ -532,8 +532,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                   	    
 	    	                   	  //  ScrollingTextPanel.this.timer.setDelay(delay);
 	    	                   	    
-	    	                               int w = 64 * KIND.width/32;
-	    	                               int h = 64*  KIND.height/32;
+	    	                              /* int w = 64 * KIND.width/32;  //originally this was w = 64 and h = 64 hard coded for the 32x32 matrix
+	    	                               int h = 64 *  KIND.height/32;*/
+	    	                    	
+	    	                    			int w = KIND.width * 2;
+	    	                    			int h = KIND.height* 2;
 	    	                   	    
 	    	                               BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 	    	                               
@@ -593,7 +596,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               
 	    	                               FontMetrics fm = g2d.getFontMetrics();
 	    	                               
-	    	                               int y = fm.getHeight();   
+	    	                               int y = fm.getHeight();   //30 = 30 * 16/32 = 15  
 	    	                               y = y * KIND.height/32;
 	    	                              // System.out.println("font height: " + y);
 
