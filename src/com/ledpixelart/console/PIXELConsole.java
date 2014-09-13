@@ -119,6 +119,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 	
 	private static boolean writeMode = false;
 	
+	private static String loopString;
+	
+	private static int loopInt;
+	
+	private static boolean loopMode;
+	
+	private static int loopCounter;
+	
 	private static boolean gifModeInternal = false;
 	
 	private static boolean gifModeExternal = false;
@@ -159,7 +167,7 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static int x;
     
-    private static int scrollingTextDelay_ = 10;
+    private static int scrollingTextDelay_ = 5;
     
     private static String scrollingText_;
     
@@ -180,10 +188,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version ***");
+		System.out.println("*** PIXEL: Console Version 1.1 ***");
 		System.out.println();
 		System.out.println("Usage:");
-		System.out.println("pixel <options>");
+		System.out.println("pixelc <options>");
 		System.out.println();
 		System.out.println("Valid options are:");
 		System.out.println("GIF MODE");
@@ -191,13 +199,16 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out
 		.println("--gif=your_filename.gif  Send this gif to PIXEL");
 		System.out
+		.println("--loop=number  How many times to loop the GIF before exiting, omit this parameter to loop indefinitely");
+		System.out
 		.println("--write  Puts PIXEL into write mode, default is streaming mode");
 		System.out
 		.println("--superpixel  change LED matrix to SUPER PIXEL 64x64");
 		System.out
 		.println("--16x32  change LED matrix to Adafruit's 16x32 LED matrix");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --gif=tree.gif");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --gif=tree.gif --superpixel --write");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --loop=10");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write");
 		
 		System.out.println("\n");
 		System.out.println("SCROLLING TEXT MODE");
@@ -205,12 +216,15 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out
 		.println("--text=\"your scrolling text\"    Make sure to enclose your text in double quotes");
 		System.out
-		.println("--speed=<number>  How fast to scroll, default value is 10. Lower is faster.");
+		.println("--speed=<number>  How fast to scroll, default value is 5. Higher is faster.");
 		System.out
 		.println("--fontsize=<number>  Default size is 30");
 		System.out
+		.println("--loop=number  How many times to loop the scrolling text before exiting, omit this parameter to loop indefinitely");
+		System.out
 		.println("--color=<color>    Supported colors are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange --loop=1");
 		
 		System.out.println("\n");
 		System.out.println("WEATHER MODE");
@@ -220,19 +234,19 @@ public class PIXELConsole extends IOIOConsoleApp {
 				.println("--woeid=your_woeid_code A numeric number that Yahoo uses\n to designate your location");
 		System.out
 				.println("--forecast Displays tomorrow's weather conditions, defaults \nto current weather conditions if not specified");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --zip=95050");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixel.jar --zip=95050 --write");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050 --write");
 		
 		System.out.println("\n");
 		System.out.println("Omitting -Dioio.SerialPorts=<Port of PIXEL> may still work\n" +
 				"but will take longer for your computer to scan all ports to find PIXEL");
 		System.out.println("<Port of PIXEL> examples:\n" +
 				"\n" +
-			"Windows: COM40\n" +
-			"Mac: tty.usbmodem1412\n" +
-			"Linux/Raspberry Pi: IOIO0");
+			"Windows: COMX\n" +
+			"Mac: tty.usbmodem141X where X is typically 1 or 2\n" +
+			"Linux/Raspberry Pi: IOIOX or /dev/ttyACMX where X is typically 0 or 1");
 		System.out.println("\n");
-		System.out.println("See http://ledpixelart.com/raspberry-pi/ for Rasp Pi setup instructions");
+		System.out.println("See http://ledpixelart.com/raspberry-pi/ for Raspberry Pi setup instructions");
 		System.out.println("Type q to quite this program");
 		//need an option to display all possible gif names
 		
@@ -284,7 +298,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 		}
 
 		private static void parseOption(String arg) throws BadArgumentsException {
-			//it can only be zip or woeid
 			
 			if (arg.startsWith("--forecast")) {
 				reportTomorrowWeather = true;
@@ -306,6 +319,13 @@ public class PIXELConsole extends IOIOConsoleApp {
 				validCommandLine = true;
 				z++;
 			}	
+			
+			if (arg.startsWith("--loop=")) {
+				loopString = arg.substring(7);
+				System.out.println("Number of times to loop = " + loopString);
+				loopMode = true;
+				loopInt =  Integer.parseInt(loopString);
+			}
 			
 			if (arg.startsWith("--text=")) {
 				scrollingText_ = arg.substring(7);
@@ -369,8 +389,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 				weatherMode = true;
 				z++;
 			}
-			
-			//setupEnvironment();
 			
 			if (validCommandLine == false) {
 				throw new BadArgumentsException("Unexpected option: " + arg);
@@ -460,6 +478,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				   	  } //end for loop
 	    					pixel.playLocalMode(); //now tell PIXEL to play locally
 	    					System.out.println("Writing " + gifFileName_ + " to PIXEL complete, now displaying...");
+	    					System.exit(1);
 	    			}
 	    			else {   //we're not writing so let's just stream
 	            
@@ -474,14 +493,16 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               			if (i >= GIFnumFrames - 1) 
 	    	               			{
 	    	               			    i = 0;
+	    	               			    loopCounter++;
+	    	               			    
+	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
+	    	               			    	if (timer != null) timer.stop();
+	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefintely");
+	    	               			    	System.exit(1);
+	    	               			    }
 	    	               			}
 	    	               		 
-	    	               		//String framestring = "animations/decoded/" + gifFileName_;
 	    	               		
-	    	               		//System.out.println("framestring: " + framestring);
-
-	    	               		//pixel.loadRGB565(framestring);
-	    	               		// pixel.SendPixelDecodedFrame(framestring, i, GIFnumFrames, GIFresolution);
 	    	               		 pixel.SendPixelDecodedFrame(currentDir, gifFileName_, i, GIFnumFrames, GIFresolution, KIND.width,KIND.height);
  	                    }
  	                };
@@ -637,19 +658,32 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               int messageWidth = fm.stringWidth(message);            
 	    	                               int resetX = 0 - messageWidth;
 	    	                               
-	    	                               if(x == resetX)
+	    	                               //if(x == resetX)
+	    	                               if(x < resetX)
 	    	                               {
 	    	                                   x = w;
+	    	                                   
+	    	                                   loopCounter++;
+	   	    	               			    
+		   	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
+		   	    	               			    	if (timer != null) timer.stop();
+		   	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefintely");
+		   	    	               			    	System.exit(1);
+		   	    	               			    }
+	    	                                   
+	    	                                   
 	    	                               }
 	    	                               else
 	    	                               {
-	    	                                   x--;
+	    	                                   //x--;
+	    	                                   x = x - scrollingTextDelay_;
 	    	                               }
 	                    }
 	                };
 	    				   
 	    				   
-	    				   timer = new Timer(scrollingTextDelay_, ScrollingTextTimer); //the timer calls this function per the interval of fps
+	    				   //timer = new Timer(scrollingTextDelay_, ScrollingTextTimer); //the timer calls this function per the interval of fps
+	    				   timer = new Timer(100, ScrollingTextTimer);
 	    				   timer.start();
 	    	}    
 	    }
