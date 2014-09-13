@@ -244,7 +244,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 				"\n" +
 			"Windows: COMX\n" +
 			"Mac: tty.usbmodem141X where X is typically 1 or 2\n" +
-			"Linux/Raspberry Pi: IOIOX or /dev/ttyACMX where X is typically 0 or 1");
+			"Linux/Raspberry Pi: IOIOX or /dev/ttyACM0 where X is typically 0 or 1");
 		System.out.println("\n");
 		System.out.println("See http://ledpixelart.com/raspberry-pi/ for Raspberry Pi setup instructions");
 		System.out.println("Type q to quite this program");
