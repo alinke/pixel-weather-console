@@ -188,7 +188,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version 1.1 ***");
+		System.out.println("*** PIXEL: Console Version 1.2 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -233,8 +233,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out
 				.println("--woeid=your_woeid_code A numeric number that Yahoo uses\n to designate your location");
 		System.out
+		.println("--loop=number  How many times to loop the weather GIF before exiting, omit this parameter to loop indefinitely");
+		System.out
 				.println("--forecast Displays tomorrow's weather conditions, defaults \nto current weather conditions if not specified");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050 --loop=10");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050 --write");
 		
 		System.out.println("\n");
@@ -497,7 +499,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               			    
 	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
 	    	               			    	if (timer != null) timer.stop();
-	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefintely");
+	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
 	    	               			    	System.exit(1);
 	    	               			    }
 	    	               			}
@@ -667,7 +669,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	   	    	               			    
 		   	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
 		   	    	               			    	if (timer != null) timer.stop();
-		   	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefintely");
+		   	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
 		   	    	               			    	System.exit(1);
 		   	    	               			    }
 	    	                                   
@@ -777,6 +779,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               			if (u >= numFrames - 1) 
 	    	               			{
 	    	               			    u = 0;
+	    	               			    
+	    	               			    loopCounter++;
+	    	               			    
+	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
+	    	               			    	if (timer != null) timer.stop();
+	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
+	    	               			    	System.exit(1);
+	    	               			    }
 	    	               			}
 
 	    	               		String framestring = "animations/decoded/" + animation_name + "/" + animation_name + u + ".rgb565";
@@ -1176,6 +1186,15 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               			if (i >= numFrames - 1) 
 	    	               			{
 	    	               			    i = 0;
+	    	               			    
+	    	               			    loopCounter++;
+	    	               			    
+	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
+	    	               			    	if (timer != null) timer.stop();
+	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
+	    	               			    	System.exit(1);
+	    	               			    }
+	    	               			    
 	    	               			}
 	    	               		 
 	    	               		String framestring = "animations/decoded/" + selectedFileName;
