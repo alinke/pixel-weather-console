@@ -366,7 +366,8 @@ public class GifDecoder {
   public int read(String name) {
     status = STATUS_OK;
     try {
-      name = name.trim().toLowerCase();
+      //name = name.trim().toLowerCase(); //this was causing a crash on linux when the user were used case senstivie names
+      name = name.trim();
       if ((name.indexOf("file:") >= 0) || (name.indexOf(":/") > 0)) {
         URL url = new URL(name);
         in = new BufferedInputStream(url.openStream());
