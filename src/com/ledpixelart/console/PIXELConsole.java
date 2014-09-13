@@ -353,7 +353,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			}	
 			
 			if (arg.startsWith("--image=")) {
-				System.out.println("gif file name: " + gifFileName_);
+				System.out.println("image file name: " + gifFileName_);
 				gifModeExternal = true;
 				validCommandLine = true;
 				z++;
