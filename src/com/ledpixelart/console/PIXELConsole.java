@@ -43,6 +43,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import twitter4j.Query;
+import twitter4j.QueryResult;
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.ConfigurationBuilder;
+
 //import com.ledpixelart.pc.PixelApp;
 
 /******** Pseudo code for this app ***************
@@ -90,6 +98,10 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private volatile static Timer timer;
     
+    public static ActionListener TwitterTimer;
+    
+    public volatile static Timer twitterTimer;
+    
     private static ActionListener AnimateTimer;
     
     private static ActionListener exitTimer_;
@@ -129,6 +141,20 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static String loopString;
 	
 	private static int loopInt;
+	
+	private static String frameDelayString;
+	
+	private static int frameDelayInt = 100; //in milliseconds
+	
+	private static boolean frameDelayOverride;
+	
+	private static String twitterSearchString;
+	
+	private static boolean twitterMode;
+	
+	private static String twitterIntervalString = null;
+	
+	private static int twitterIntervalInt = 60; //in seconds
 	
 	private static boolean loopMode;
 	
@@ -190,12 +216,28 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static Color textColor;
     
+    private static Twitter twitter;
+    
+    private static TwitterFactory tf;
+    
+    private static Query query;
+    
+    private static QueryResult result = null;
+    
+    private Status status;
+    
+    private String lastTweet;
+    
+    private Integer tweetCount = 0;
+    
+    private static boolean filterTweets = true;
+    
 	private static enum Command {
 		VERSIONS, FINGERPRINT, WRITE
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version 1.4 ***");
+		System.out.println("*** PIXEL: Console Version 1.5 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -263,11 +305,67 @@ public class PIXELConsole extends IOIOConsoleApp {
 		//need an option to display all possible gif names
 		
 	}
-
-	// Boilerplate main(). Copy-paste this code into any IOIOapplication.
 		public static void main(String[] args) throws Exception {
 			
+			 TwitterTimer = new ActionListener() 
+			  	{
+			  	    public void actionPerformed(ActionEvent evt) 
+			  	    {
+			  	  	String tweetSearchTerm = twitterSearchString;
+				   	query = new Query(tweetSearchTerm);
+				        
+						try {
+							result = twitter.search(query);
+							System.out.println("Number of matched tweets: " + result.getCount());
+						} catch (TwitterException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						for (Status status : result.getTweets()) {
+							
+							if (filterTweets) { // then we don't want @ mentions or http:// tweets
+								if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
+									
+									//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+									System.out.println(status.getText());
+								}
+							}
+							
+							else {
+								if (!status.getText().contains("RT")) {
+									
+									//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+									System.out.println(status.getText()); //it's the last one so let's display it
+								}
+							}
+				        }
+						
+						//we've finished the timer tick so now we need to reset the scrolling timer
+						
+						CheckAndStartTimer();
+						
+						/*   private void CheckAndStartTimer() {
+						    	if (pixel != null && !timer.isRunning()) {
+							  		  pixel.interactiveMode(); //put into interactive mode as could have been stuck in local mode after a write
+							  		  timer.start();
+							  	  }
+						    }*/
+						
+			  	    }
+			  	};
+			
 			//System.out.println("Working Directory = " + System.getProperty("user.dir"));
+			
+			ConfigurationBuilder cb = new ConfigurationBuilder();
+		   	 cb.setDebugEnabled(true)
+		   	   .setOAuthConsumerKey("Ax6lCfg9Yf2Niab22e9SsY75b")
+		   	   .setOAuthConsumerSecret("3isp024VgehfZ60HwbEcBt1ZZzPyoXseaWYmO4NXxoxefKY65A")
+		   	   .setOAuthAccessToken("") // we don't need these right now as we are just calling public twitter searches
+		   	   .setOAuthAccessTokenSecret("");
+		   	 tf = new TwitterFactory(cb.build());
+		   	 twitter = tf.getInstance();
+		   	 
+		   	
 			
 			currentDir = System.getProperty("user.dir");
 			
@@ -386,6 +484,25 @@ public class PIXELConsole extends IOIOConsoleApp {
 				loopInt =  Integer.parseInt(loopString);
 			}
 			
+			if (arg.startsWith("--framedelay=")) {
+				frameDelayString = arg.substring(13);
+				frameDelayOverride = true;
+				
+				if (Float.parseFloat(frameDelayString) < 1 || frameDelayString.contains(".")) {
+					frameDelayOverride = false;
+					System.out.println("The frame delay must be a whole number between 1 and 1000 (milliseconds), not overriding the frame deay");
+				}
+				else {
+					frameDelayInt =  Integer.parseInt(frameDelayString);
+					System.out.println("Frame delay override specified at " + frameDelayString + " milliseconds");
+				}
+				
+				if (frameDelayInt > 1000) {
+					frameDelayInt = 1000;
+					System.out.println("Sorry, the slowest frame delay possible is 1000 ms or 1 second, setting the frame delay to 1000 ms");
+				}
+			}
+			
 			if (arg.startsWith("--text=")) {
 				scrollingText_ = arg.substring(7);
 				System.out.println("Scrolling Text Mode Selected");
@@ -399,6 +516,66 @@ public class PIXELConsole extends IOIOConsoleApp {
 				//System.out.println("scrolling text speed: " + scrollingTextSpeed_);
 				scrollingTextDelay_ = Integer.parseInt(scrollingTextSpeed_);
 			}	
+			
+			if (arg.startsWith("--twitter=")) {
+				twitterSearchString = arg.substring(10);
+				System.out.println("In Twitter mode with search term: " + twitterSearchString);
+				scrollingTextMode = true;
+				twitterMode = true;
+				validCommandLine = true;
+				z++;
+				
+				String tweetSearchTerm = twitterSearchString;
+			   	query = new Query(tweetSearchTerm);
+			        
+					try {
+						result = twitter.search(query);
+						System.out.println("Number of matched tweets: " + result.getCount());
+					} catch (TwitterException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					for (Status status : result.getTweets()) {
+						
+						if (filterTweets) { // then we don't want @ mentions or http:// tweets
+							if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
+								
+								//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+								System.out.println(status.getText());
+							}
+						}
+						
+						else {
+							if (!status.getText().contains("RT")) {
+								
+								//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+								System.out.println(status.getText()); //it's the last one so let's display it
+							}
+						}
+			        }
+			}	
+			
+			if (arg.startsWith("--interval=")) {
+				twitterIntervalString = arg.substring(11);
+				
+				if (Float.parseFloat(twitterIntervalString) < 10 || twitterIntervalString.contains(".") || Float.parseFloat(twitterIntervalString) > 86400) {
+					System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
+				}
+				else {
+					twitterIntervalInt = Integer.parseInt(twitterIntervalString);
+					System.out.println("Twitter text from the search term will refresh every " + twitterIntervalString + " seconds");
+				}
+				
+				//test only, delete this
+				//twitterTimer = new Timer(twitterIntervalInt * 1000, TwitterTimer);
+				//twitterTimer.start();
+				
+			}	
+			
+			//fix this later, not working fro some reason, twitterIntervalString is null even if --interval is there
+			/*if (twitterMode && twitterIntervalString == null) { //just prompting the user that they can specifiy a twitter refresh interval
+				System.out.println("You didn't specify a Twitter search term refresh interval so we'll default to 60 seconds.\nNext time you can add the option --interval=x where x is a whole number in seconds between 10 and 86400 (24 hours)");
+			}*/
 			
 			if (arg.startsWith("--fontsize=")) {
 				scrollingTextFontSizeString = arg.substring(11);
@@ -503,10 +680,17 @@ public class PIXELConsole extends IOIOConsoleApp {
 			System.out.println(gifFileName_ + " is already decoded, skipping decoding step");
 		}
 		
-		GIFfps = pixel.getDecodedfps(currentDir, gifFileName_); //get the fps
 	    GIFnumFrames = pixel.getDecodednumFrames(currentDir, gifFileName_);
-	    GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, gifFileName_);  
 	    GIFresolution = pixel.getDecodedresolution(currentDir, gifFileName_);
+	    
+	    if (frameDelayOverride) { 
+	    	GIFselectedFileDelay = frameDelayInt; //use the override the user specified from the command line --framedelay=x
+	    	GIFfps = 1000.f / GIFselectedFileDelay;
+	    }
+	    else { //no override so just use as is
+	    	 GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, gifFileName_);  
+	    	 GIFfps = pixel.getDecodedfps(currentDir, gifFileName_); //get the fps
+	    }
 	    
 	    System.out.println(gifFileName_ + " contains " + GIFnumFrames + " total frames, a " + GIFselectedFileDelay + "ms frame delay or " + GIFfps + " frames per second and a resolution of " + GIFresolution);
 		
@@ -575,10 +759,19 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 	      }
 	 
+	 private static void CheckAndStartTimer() {
+	    //TO DO make sure timer was initialized prior	
+		 
+		 if (pixel != null && !timer.isRunning()) {
+		  		  pixel.interactiveMode(); //put into interactive mode as could have been stuck in local mode after a write
+		  		  timer.start();
+		  	  }
+	 }
+	 
 	 private static void scrollText(final String scrollingText, boolean writeMode) 
 	    {
 		 
-		 stopExistingTimer(); //is this needed, probably not
+		 stopExistingTimer(); 
 			
 			if (pixelHardwareID.substring(0,4).equals("PIXL") && writeMode == true) {  //in write mode, we don't need a timer because we don't need a delay in between frames, we will first put PIXEL in write mode and then send all frames at once
 					//pixel.interactiveMode();
@@ -603,7 +796,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			else {   //we're not writing so let's just stream
 		 
 		 
-	            stopExistingTimer(); //is this needed, probably no
+	            stopExistingTimer(); 
 	    				   
 	    				   ActionListener ScrollingTextTimer = new ActionListener() {
 
@@ -661,8 +854,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               
 	    	                               g2d.setFont(tr);
 	    	                               
-	    	                              String message = scrollingText;
-	    	                               //String message = "hard code test";
+	    	                               //add check here if we're scrolling twitter text instead
+	    	                               
+	    	                               
+	    	                               
+	    	                               String message = scrollingText;
 	    	                               
 	    	                               FontMetrics fm = g2d.getFontMetrics();
 	    	                               
@@ -1203,15 +1399,29 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 		 //here we will send the selectedfilename to the pixel class, the pixel class will then look for the corresponding filename.txt meta-data file and return back the meta data
 		
-		if (pixel.GIFNeedsDecoding(currentDir, selectedFileName, currentResolution) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
+		//if (pixel.GIFNeedsDecoding(currentDir, selectedFileName, currentResolution) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
 			
 			//decodeGIF
-		}
+		//}
 		
-		GIFfps = pixel.getDecodedfps(currentDir, selectedFileName); //get the fps //to do fix this later becaause we are getting from internal path
+		//TO DO make sure to test the weather gifs now that we've made these changes
+		
+		/*GIFfps = pixel.getDecodedfps(currentDir, selectedFileName); //get the fps //to do fix this later becaause we are getting from internal path
 	    GIFnumFrames = pixel.getDecodednumFrames(currentDir, selectedFileName);
 	    GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, selectedFileName);
+	    GIFresolution = pixel.getDecodedresolution(currentDir, selectedFileName);*/
+	    
+	    GIFnumFrames = pixel.getDecodednumFrames(currentDir, selectedFileName);
 	    GIFresolution = pixel.getDecodedresolution(currentDir, selectedFileName);
+	    
+	    if (frameDelayOverride) { 
+	    	GIFselectedFileDelay = frameDelayInt; //use the override the user specified from the command line --framedelay=x
+	    	GIFfps = 1000.f / GIFselectedFileDelay;
+	    }
+	    else { //no override so just use as is
+	    	 GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, selectedFileName);  
+	    	 GIFfps = pixel.getDecodedfps(currentDir, selectedFileName); //get the fps
+	    }
 		
 		//****** Now let's setup the animation ******
 		   
@@ -1319,7 +1529,15 @@ public class PIXELConsole extends IOIOConsoleApp {
 				}
 				
 				else if (scrollingTextMode == true) {
-					scrollText(scrollingText_, writeMode); //write or stream
+					
+					if (twitterMode) { //so we're in twitter mode so let's start the twitter search timer
+						twitterTimer = new Timer(twitterIntervalInt * 1000, TwitterTimer);
+						twitterTimer.start();
+						scrollText(twitterSearchString, writeMode);
+					}
+					else {
+						scrollText(scrollingText_, writeMode); //write is not supported, just stream right now
+					}
 				}
 			
 			}
