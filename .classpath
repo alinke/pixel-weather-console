@@ -4,8 +4,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/IOIOLibPC"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/resources"/>
-	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/httpclient-4.3.4.jar"/>
-	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/httpcore-4.3.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/twitter4j-core-4.0.2.jar"/>
+	<classpathentry kind="lib" path="/Users/al/pixel2/pixel-weather-console/jar/httpclient-4.3.4.jar"/>
+	<classpathentry kind="lib" path="/Users/al/pixel2/pixel-weather-console/jar/httpcore-4.3.2.jar"/>
+	<classpathentry kind="lib" path="/Users/al/pixel2/pixel-weather-console/jar/twitter4j-core-4.0.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

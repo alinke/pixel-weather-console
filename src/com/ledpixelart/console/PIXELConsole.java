@@ -156,6 +156,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	
 	private static int twitterIntervalInt = 60; //in seconds
 	
+	private static String twitterResult = null;
+	
 	private static boolean loopMode;
 	
 	private static int loopCounter;
@@ -246,26 +248,31 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out.println("GIF MODE");
 		System.out.println();
 		System.out
-		.println("--gif=your_filename.gif  Send this gif to PIXEL");
+		.println("--gif=your_filename.gif  Send this GIF to PIXEL. IMPORTANT: You must place GIFs in the same directory as pixelc.jar");
 		System.out
 		.println("--loop=number  How many times to loop the GIF before exiting, omit this parameter to loop indefinitely");
 		System.out
 		.println("--write  Puts PIXEL into write mode, default is streaming mode");
+		System.out
+		.println("--framedelay=x  Overrides the GIF speed/frame delay where x is a whole number representing milliseconds between 1 and 1000");
 		System.out
 		.println("--superpixel  change LED matrix to SUPER PIXEL 64x64");
 		System.out
 		.println("--16x32  change LED matrix to Adafruit's 16x32 LED matrix");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 ~/pixel/pixelc.jar --gif=~/pixel/tree.gif");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 /Users/home/joe/pixelc.jar --gif=/Users/home/joe/tree.gif");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --loop=10");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --loop=10 --framedelay=200");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write");
 		
 		System.out.println("\n");
-		System.out.println("SCROLLING TEXT MODE");
+		System.out.println("SCROLLING TEXT MODE / TWITTER FEED");
 		System.out.println();
 		System.out
 		.println("--text=\"your scrolling text\"    Make sure to enclose your text in double quotes");
+		System.out
+		.println("--twitter=\"your Twitter search term\"    Make sure to enclose search term in double quotes. Use --text or --twitter but not both.");
+		System.out
+		.println("--interval=x    How often in seconds to update the Twitter feed where x is a whole number between 10 and 86400 (24 hours)"); 
 		System.out
 		.println("--speed=<number>  How fast to scroll, default value is 6. Higher is faster.");
 		System.out
@@ -274,6 +281,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		.println("--loop=number  How many times to loop the scrolling text before exiting, omit this parameter to loop indefinitely");
 		System.out
 		.println("--color=<color>    Supported colors are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --twitter=\"cats and dogs\" --interval=30");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange --loop=1");
 		
@@ -327,6 +335,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 								if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
 									
 									//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+									twitterResult = status.getText();
 									System.out.println(status.getText());
 								}
 							}
@@ -335,6 +344,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 								if (!status.getText().contains("RT")) {
 									
 									//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+									twitterResult = status.getText();
 									System.out.println(status.getText()); //it's the last one so let's display it
 								}
 							}
@@ -463,11 +473,21 @@ public class PIXELConsole extends IOIOConsoleApp {
 						File GIFfileAbsolute = new File(gifFileName_);
 						if (GIFfileAbsolute.exists() && !GIFfileAbsolute.isDirectory()) { 
 							
-							//String path = gifFileName_.
-							  //  substring(0,gifFileName_.lastIndexOf(File.separator));
+						
+							gifFileName_ = GIFfileAbsolute.getName();
+							
+							//the commented out code here did not work on the Raspberry Pi so changed to above
+							/*String path = gifFileName_.
+							    substring(0,gifFileName_.lastIndexOf(File.separator));
 							
 							gifFileName_ = GIFfileAbsolute.getName();
-							System.out.println("GIF found using absolute path, file name is: " + GIFfileAbsolute.getName());
+							System.out.println("GIF found using absolute path, file name is: " + GIFfileAbsolute.getName());*/
+							
+							// gifFileName_ = gifFileName_.
+								//    substring(0,gifFileName_.lastIndexOf(File.separator));
+								
+								//gifFileName_ = GIFfileAbsolute.getName();
+							System.out.println("GIF found using absolute path, file name is: " + gifFileName_);
 					    }
 						else {
 							System.out.println("GIF not found, please check the spelling and/or path, exiting now...");
@@ -541,6 +561,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 							if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
 								
 								//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+								twitterResult = status.getText();
 								System.out.println(status.getText());
 							}
 						}
@@ -549,10 +570,15 @@ public class PIXELConsole extends IOIOConsoleApp {
 							if (!status.getText().contains("RT")) {
 								
 								//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+								twitterResult = status.getText();
 								System.out.println(status.getText()); //it's the last one so let's display it
 							}
 						}
 			        }
+					
+					if (twitterResult == null) {
+						twitterResult = "No match found for Twitter search: " + twitterSearchString;
+					}
 			}	
 			
 			if (arg.startsWith("--interval=")) {
@@ -565,11 +591,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 					twitterIntervalInt = Integer.parseInt(twitterIntervalString);
 					System.out.println("Twitter text from the search term will refresh every " + twitterIntervalString + " seconds");
 				}
-				
-				//test only, delete this
-				//twitterTimer = new Timer(twitterIntervalInt * 1000, TwitterTimer);
-				//twitterTimer.start();
-				
 			}	
 			
 			//fix this later, not working fro some reason, twitterIntervalString is null even if --interval is there
@@ -858,7 +879,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               
 	    	                               
 	    	                               
-	    	                               String message = scrollingText;
+	    	                             //  String message = scrollingText;
+	    	                               String message = twitterResult;
 	    	                               
 	    	                               FontMetrics fm = g2d.getFontMetrics();
 	    	                               
@@ -1533,7 +1555,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 					if (twitterMode) { //so we're in twitter mode so let's start the twitter search timer
 						twitterTimer = new Timer(twitterIntervalInt * 1000, TwitterTimer);
 						twitterTimer.start();
-						scrollText(twitterSearchString, writeMode);
+						scrollText(twitterResult, writeMode);
 					}
 					else {
 						scrollText(scrollingText_, writeMode); //write is not supported, just stream right now
