@@ -239,7 +239,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version 1.5 ***");
+		System.out.println("*** PIXEL: Console Version 1.6 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -875,12 +875,13 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               
 	    	                               g2d.setFont(tr);
 	    	                               
-	    	                               //add check here if we're scrolling twitter text instead
-	    	                               
-	    	                               
-	    	                               
-	    	                             //  String message = scrollingText;
-	    	                               String message = twitterResult;
+	    	                               String message = null;
+	    	                               if (twitterMode) {
+	    	                            	   message = twitterResult;
+	    	                               }
+	    	                               else {
+	    	                            	   message = scrollingText;
+	    	                               }
 	    	                               
 	    	                               FontMetrics fm = g2d.getFontMetrics();
 	    	                               
