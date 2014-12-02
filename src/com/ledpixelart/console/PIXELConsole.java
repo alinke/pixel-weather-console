@@ -232,14 +232,18 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private Integer tweetCount = 0;
     
+    private static boolean stayConnected = true;
+    
     private static boolean filterTweets = true;
+    
+    private static boolean backgroundMode = false;
     
 	private static enum Command {
 		VERSIONS, FINGERPRINT, WRITE
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version 1.6 ***");
+		System.out.println("*** PIXEL: Console Version 1.7 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -259,7 +263,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 		.println("--superpixel  change LED matrix to SUPER PIXEL 64x64");
 		System.out
 		.println("--16x32  change LED matrix to Adafruit's 16x32 LED matrix");
+		System.out
+		.println("--daemon  runs as a background process AND you must also add & at the end of the command line");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --daemon &");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 ~/pixel/pixelc.jar --gif=~/pixel/tree.gif");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --loop=10 --framedelay=200");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write");
@@ -281,7 +288,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 		.println("--loop=number  How many times to loop the scrolling text before exiting, omit this parameter to loop indefinitely");
 		System.out
 		.println("--color=<color>    Supported colors are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
+		System.out
+		.println("--daemon  runs as a background process AND you must also add & at the end of the command line");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --twitter=\"cats and dogs\" --interval=30");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --twitter=\"cats and dogs\" --interval=30 --daemon &");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange --loop=1");
 		
@@ -418,6 +428,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 		}
 
 		private static void parseOption(String arg) throws BadArgumentsException {
+			
+			
 			
 			if (arg.startsWith("--forecast")) {
 				reportTomorrowWeather = true;
@@ -647,6 +659,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 				z++;
 			}
 			
+			if (arg.startsWith("--daemon")) { //not using this one
+				System.out.println("Daemon Mode");
+				backgroundMode = true;
+			}	
+			
 			if (validCommandLine == false) {
 				throw new BadArgumentsException("Unexpected option: " + arg);
 			}
@@ -662,6 +679,30 @@ public class PIXELConsole extends IOIOConsoleApp {
 	
 
 	protected void run(String[] args) throws IOException {
+		
+		System.out.println("Pixel integration with delayted run() via sleep.");
+		
+		if (backgroundMode) {
+		
+			while(stayConnected)
+				            {
+				                long duration = 1000 * 60 * 1;
+				                try
+				                {
+				                    Thread.sleep(duration);
+				                } 
+				                catch (InterruptedException ex)
+				                {
+				                    String message = "Error sleeping for Pixel initialization: " + ex.getMessage();
+				                   // logger.log(Level.INFO, message, ex);
+				                   // System.out.println(Level.INFO, message, ex);
+				                }
+				            }
+		}
+		
+		else {
+		
+		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				System.in));
 		boolean abort = false;
@@ -682,7 +723,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out
 				.println("Unknown input. q=quit.");
 			}
-		}
+		} 
+			
+	}
 	
 	}
 	
