@@ -243,7 +243,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version 1.7 ***");
+		System.out.println("*** PIXEL: Console Version 2.0 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -264,9 +264,17 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out
 		.println("--16x32  change LED matrix to Adafruit's 16x32 LED matrix");
 		System.out
+		.println("--adafruit32x32  change LED matrix to Adafruit's 32x32 LED matrix or 1/16 scan other 32x32 panels");
+		System.out
+		.println("--64x16  change LED matrix to 64x16 which is two daisy chained 32x16");
+		System.out
+		.println("--adafruit64x64  change LED matrix to Adafruit 64x64");
+		System.out
+		.println("--adafruit64x32  change LED matrix to Adafruit 64x32");
+		System.out
 		.println("--daemon  runs as a background process AND you must also add & at the end of the command line");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --daemon &");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1421 pixelc.jar --gif=tree.gif");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1421 pixelc.jar --gif=tree.gif --daemon &");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 ~/pixel/pixelc.jar --gif=~/pixel/tree.gif");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --loop=10 --framedelay=200");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write");
@@ -290,7 +298,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		.println("--color=<color>    Supported colors are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
 		System.out
 		.println("--daemon  runs as a background process AND you must also add & at the end of the command line");
-		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --twitter=\"cats and dogs\" --interval=30");
+		System.out.println("Ex. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1421 pixelc.jar --twitter=\"cats and dogs\" --interval=30 --adafruit32x32");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --twitter=\"cats and dogs\" --interval=30 --daemon &");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange --loop=1");
@@ -638,9 +646,29 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out.println("16x32 LED matrix has been selected");
 			}
 			
+			if (arg.startsWith("--adafruit32x32")) {
+				ledMatrixType = 11;
+				System.out.println("Adafruit 32x32 LED matrix has been selected");
+			}
+			
+			if (arg.startsWith("--64x16")) {
+				ledMatrixType = 17;
+				System.out.println("64x16 LED matrix has been selected");
+			}
+			
 			if (arg.startsWith("--superpixel")) {
 				ledMatrixType = 10;
 				System.out.println("SUPER PIXEL selected");
+			}
+			
+			if (arg.startsWith("--adafruit64x64")) {
+				ledMatrixType = 14;
+				System.out.println("Adafruit 64x64 selected");
+			}
+			
+			if (arg.startsWith("--adafruit64x32")) {
+				ledMatrixType = 13;
+				System.out.println("Adafruit 64x32 selected");
 			}
 			
 			if (arg.startsWith("--zip=")) {
@@ -1232,7 +1260,43 @@ public class PIXELConsole extends IOIOConsoleApp {
 		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_64x64;
 		    	 frame_length = 8192;
 		    	 currentResolution = 128; 
-		    	 break;	 	 		 
+		    	 break;	 
+	         case 11:
+	    	   KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x32;
+                frame_length = 2048;
+                currentResolution = 32; 
+                break;	 
+             case 12:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x32_ColorSwap;
+                frame_length = 2048;
+                currentResolution = 32; 
+                break;	 	 
+             case 13:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_64x32;
+                frame_length = 4096;
+                currentResolution = 64; 
+                break;	
+             case 14:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_64x64;
+                frame_length = 8192;
+                currentResolution = 128; 
+                break;
+             case 15:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_128x32;
+                frame_length = 8192;
+                currentResolution = 128; 
+                break;	 	 	
+            case 16:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x128;
+                frame_length = 8192;
+                currentResolution = 128; 
+                break;	
+            case 17:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_64x16;
+                frame_length = 2048;
+                currentResolution = 6416; 
+                break;	 	 
+		    	 
 		     default:	    		 
 		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32; //v2 as the default
 		    	 frame_length = 2048;
