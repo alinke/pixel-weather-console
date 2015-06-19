@@ -1,5 +1,6 @@
 package com.ledpixelart.console;
 
+import ioio.lib.api.AnalogInput;
 import ioio.lib.api.IOIO;
 import ioio.lib.api.IOIO.VersionType;
 import ioio.lib.api.RgbLedMatrix;
@@ -18,27 +19,43 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-//import java.io.File;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
+import javax.xml.bind.JAXBContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.onebeartoe.pixel.hardware.Pixel;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -50,6 +67,15 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
+import yahoofinance.Stock;
+import yahoofinance.YahooFinance;
+
+
+import java.util.List;
+//import org.jdom2.Document;
+//import org.jdom2.Element;
+//import org.jdom2.JDOMException;
+//import org.jdom2.input.SAXBuilder;
 
 //import com.ledpixelart.pc.PixelApp;
 
@@ -65,7 +91,7 @@ We will make calls to the PIXEL class
 
 public class PIXELConsole extends IOIOConsoleApp {
 @SuppressWarnings("deprecation")
-//public class PIXELConsole  {
+
 	private boolean ledOn_ = false;
 
 	private static IOIO ioiO; 
@@ -91,6 +117,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static int u;
 	
 	private static int z = 0;
+	
+	private static int q = 0;
 	    
     private static int numFrames = 0;
     
@@ -178,6 +206,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	
 	private static InputStream inputXml = null;
 	
+	private static InputStream authXml = null;
+	
+	private static InputStream dataXml = null;
+	
     private static int selectedFileTotalFrames;
     
     private static int selectedFileDelay;
@@ -204,6 +236,8 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static int scrollingTextDelay_ = 6;
     
+    private static int scrollingSmoothness_ = 100; //put a smaller number like 10 for smoother scrolling but you'll need a USB connection for smooth, bluetooth there will be some delay
+    
     private static String scrollingText_;
     
     private static boolean scrollingTextMode = false;
@@ -217,6 +251,8 @@ public class PIXELConsole extends IOIOConsoleApp {
     private static String scrollingTextColor_ = "red";
     
     private static Color textColor;
+    
+    private static int fontOffset = 0;
     
     private static Twitter twitter;
     
@@ -234,16 +270,75 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static boolean stayConnected = true;
     
-    private static boolean filterTweets = true;
+    private static boolean filterTweets = false;
     
     private static boolean backgroundMode = false;
+    
+    private static boolean quickbaseMode = false;
+    
+    private static String quickbaseTicket = null;
+    
+    private static String quickBasePIXELString = null;
+    
+    private static boolean complimentsMode = false;
+    
+    ///*********** Edit QuickBase Parameters Here ******************
+    private static String quickBaseDBID = null;
+    private static String quickBaseToken = null; //the token is assigned at the QuickBase App level and will be different for each one
+    private static String quickBaseDomain = null;
+    private static String quickBaseSearchTermForDescriptionField = null;
+    private static String quickBaseUserID = null;
+    private static String quickBaseUserPassword = null;
+    private static String quickBaseRootXMLNode = "qdbapi"; //you should NOT need to change this
+    private static String quickBaseDataXMLNode = "record"; //you should NOT need to change this
+    private static String quickBaseQueryFieldID = null;
+    private static String quickBaseReturnFields = null;
+    private static int    quickBaseRefreshInterval = 5;
+    ///**************************************************************
+    
+    private static String proximityPinString_;
+    
+    private static int proximityPin_ = 34;
+    
+    private static boolean ProxSensor = false;
+    
+    private static boolean ProxShow = false;
+    
+    private static boolean ProxTriggered = false;
+    
+    private static boolean ProxTriggerDone = true;
+    
+    private static int TriggerUpperThreshold_ = 500;
+    
+	private static String sensorLoopDelayString_ = null;
+	
+	private static int sensorLoopDelay_ = 500;
+    
+    private static HttpURLConnection conn;
+    
+    private static boolean quickBaseAuthSuccesful = false;
+    
+    private static String stockSymbols = "AMAT";
+    
+    private static String stockPrice = null;
+    
+    private static String stockChangeString = null;
+    
+    private static Boolean stockMode = false;
+    
+    private static BigDecimal stockChange;
+    
+    private static String complimentString = null;
+    
+	private static String compliementColor = "green";
+	
     
 	private static enum Command {
 		VERSIONS, FINGERPRINT, WRITE
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console Version 2.0 ***");
+		System.out.println("*** PIXEL: Console V2.5 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -280,28 +375,72 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write");
 		
 		System.out.println("\n");
-		System.out.println("SCROLLING TEXT MODE / TWITTER FEED");
+		System.out.println("SCROLLING TEXT MODE / QUICKBASE SEARCH / TWITTER FEED");
 		System.out.println();
 		System.out
-		.println("--text=\"your scrolling text\"    Make sure to enclose your text in double quotes");
+		.println("--quickbase    QuickBase mode, send some scrolling text from QuickBase");
+		System.out
+		.println("--qbuserid=<text>    QuickBase user id");
+		System.out
+		.println("--qbpassword=<text>    QuickBase password");
+		System.out
+		.println("--qbdomain=<text>    QuickBase domain");
+		System.out
+		.println("--qbdatabase=<text>    ID of the target Quickbase Database");
+		System.out
+		.println("--qbqueryfield=<number>    The field id of the field in QuickBase to query against");
+		System.out
+		.println("--qbsearchstring=\"your search term\"    Search string to query the QuickBase, Make sure to enclose your text in double quotes");
+		System.out
+		.println("--qbreturnfields=<number.number.number.number>    Field IDs to return in the xml data, separate with a dot like this 3.5.7.10 which returns fields with IDs 3,5,7, and 10");
+		System.out
+		.println("--qbtoken=<text>    The QuickBase application token string, get this from your QuickBase administrator");
+		System.out
+		.println("--qbrefresh=<number>   How many times to scroll result before checking QuickBase again for the latest data: Omit this for the default of 10");
+		System.out
+		.println("--text=\"your scrolling text\"  Scrolls your message.  Make sure to enclose your text in double quotes");
 		System.out
 		.println("--twitter=\"your Twitter search term\"    Make sure to enclose search term in double quotes. Use --text or --twitter but not both.");
 		System.out
-		.println("--interval=x    How often in seconds to update the Twitter feed where x is a whole number between 10 and 86400 (24 hours)"); 
+		.println("--filtertweets  Filter Tweets that have RT, contain http:// or @");
+		System.out
+		.println("--interval=<number>    How often in seconds to update the Twitter feed where x is a whole number between 10 and 86400 (24 hours)"); 
 		System.out
 		.println("--speed=<number>  How fast to scroll, default value is 6. Higher is faster.");
 		System.out
+		.println("--smooth=<number>  How smooth the scrolling text is, default value is 100. The combo of smooth=15 and speed=1 will be smooth but you'll need a USB connection, Bluetooth will have a lag");
+		System.out
 		.println("--fontsize=<number>  Default size is 30");
 		System.out
-		.println("--loop=number  How many times to loop the scrolling text before exiting, omit this parameter to loop indefinitely");
+		.println("--loop=<number>  How many times to loop the scrolling text before exiting, omit this parameter to loop indefinitely");
 		System.out
-		.println("--color=<color>    Supported colors are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
+		.println("--color=<text>    Supported values are red, green, blue, cyan, gray, magenta, orange, pink, and yellow"); 
+		System.out
+		.println("--offset=<number>   Use this if your scrolling text is not centered, a postive numbers moves the text up and negative moves down, just experiment until your text is centered"); 
+		System.out
+		.println("--proximity  Turns on the proximity sensor for interactive applications"); 
+		System.out
+		.println("--proximitypin=<number>   The default proximity pin is 34, use this to specific a different pin, options are 31,32,33, or 34"); 
+		System.out
+		.println("--proximityhigh=<number>   The upper limit threshold for the prox sensor to trigger, ie, will trigger if goes over this number"); 
+		System.out
+		.println("--proximityshow=<number>   Display the proximity sensor value on the LED display"); 
+		System.out
+		.println("--sensorloopdelay=<number>  time in milliseconds to poll the sensor, omit this parameter to use default: 500"); 
+		System.out
+		.println("--stock=<text>  Scrolls stock ticket upon proximity trigger, currently only one stock symbol is supported, proximity sesor must be turned on"); 
+		System.out
+		.println("--compliments  Scrolls a compliment message upon proximity trigger, proximity sensor must be turned on"); 
 		System.out
 		.println("--daemon  runs as a background process AND you must also add & at the end of the command line");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1421 pixelc.jar --twitter=\"cats and dogs\" --interval=30 --adafruit32x32");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --twitter=\"cats and dogs\" --interval=30 --daemon &");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange");
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --text=\"hello world\" --speed=10 --fontsize=36 --color=orange --loop=1");
+		System.out.println("Ex. QuickBase example java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1411 pixelc.jar --quickbase --smooth=15 --speed=1 --offset=-10 --color=blue --64x16 --qbuserid=Your QB User ID --qbpassword=Your QB Password --qbdomain=Your QB Domain --qbdatabase=Your QB Database ID --qbsearchstring==\"Your Search Text\" --qbqueryfield=QB Field ID to Search --qbtoken=Your QB Application Token");
+		System.out.println("Ex. QuickBase example with stock ticker proximity interrupt java -jar pixelc.jar --quickbase --smooth=15 --speed=1 --offset=-10 --color=blue --64x16 --qbuserid=Your QB User ID --qbpassword=Your QB Password --qbdomain=Your QB Domain --qbdatabase=Your QB Database ID --qbsearchstring==\"Your Search Text\" --qbqueryfield=QB Field ID to Search --qbtoken=Your QB Application Token --qbrefresh=1 --stock=AAPL --proximity");
+		System.out.println("Ex. Twitter Feed with proximity interrupt to display compliment messages java -jar pixelc.jar --twitter=\"cats and dogs\" --smooth=15 --speed=1 --offset=-10 --color=blue --64x16 --proximity --compliments");
+
 		
 		System.out.println("\n");
 		System.out.println("WEATHER MODE");
@@ -333,67 +472,65 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
 		public static void main(String[] args) throws Exception {
 			
-			 TwitterTimer = new ActionListener() 
-			  	{
-			  	    public void actionPerformed(ActionEvent evt) 
-			  	    {
-			  	  	String tweetSearchTerm = twitterSearchString;
-				   	query = new Query(tweetSearchTerm);
-				        
-						try {
-							result = twitter.search(query);
-							System.out.println("Number of matched tweets: " + result.getCount());
-						} catch (TwitterException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
+			TwitterTimer = new ActionListener() 
+		  	{
+		  	    public void actionPerformed(ActionEvent evt) 
+		  	    {
+		  	  	String tweetSearchTerm = twitterSearchString;
+			   	query = new Query(tweetSearchTerm);
+			        
+					try {
+						result = twitter.search(query);
+						System.out.println("Number of matched tweets: " + result.getCount());
+					} catch (TwitterException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					for (Status status : result.getTweets()) {
+						
+						if (filterTweets) { // then we don't want @ mentions or http:// tweets
+							if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
+								
+								//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+								twitterResult = status.getText();
+								System.out.println(status.getText());
+							}
 						}
-						for (Status status : result.getTweets()) {
-							
-							if (filterTweets) { // then we don't want @ mentions or http:// tweets
-								if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
-									
-									//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
-									twitterResult = status.getText();
-									System.out.println(status.getText());
-								}
+						
+						else {
+							if (!status.getText().contains("RT")) {
+								
+								//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+								twitterResult = status.getText();
+								System.out.println(status.getText()); //it's the last one so let's display it
 							}
-							
-							else {
-								if (!status.getText().contains("RT")) {
-									
-									//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
-									twitterResult = status.getText();
-									System.out.println(status.getText()); //it's the last one so let's display it
-								}
-							}
-				        }
-						
-						//we've finished the timer tick so now we need to reset the scrolling timer
-						
-						CheckAndStartTimer();
-						
-						/*   private void CheckAndStartTimer() {
-						    	if (pixel != null && !timer.isRunning()) {
-							  		  pixel.interactiveMode(); //put into interactive mode as could have been stuck in local mode after a write
-							  		  timer.start();
-							  	  }
-						    }*/
-						
-			  	    }
-			  	};
-			
-			//System.out.println("Working Directory = " + System.getProperty("user.dir"));
-			
-			ConfigurationBuilder cb = new ConfigurationBuilder();
-		   	 cb.setDebugEnabled(true)
-		   	   .setOAuthConsumerKey("Ax6lCfg9Yf2Niab22e9SsY75b")
-		   	   .setOAuthConsumerSecret("3isp024VgehfZ60HwbEcBt1ZZzPyoXseaWYmO4NXxoxefKY65A")
-		   	   .setOAuthAccessToken("") // we don't need these right now as we are just calling public twitter searches
-		   	   .setOAuthAccessTokenSecret("");
-		   	 tf = new TwitterFactory(cb.build());
-		   	 twitter = tf.getInstance();
-		   	 
-		   	
+						}
+			        }
+					
+					//we've finished the timer tick so now we need to reset the scrolling timer
+					
+					CheckAndStartTimer();
+					
+					/*   private void CheckAndStartTimer() {
+					    	if (pixel != null && !timer.isRunning()) {
+						  		  pixel.interactiveMode(); //put into interactive mode as could have been stuck in local mode after a write
+						  		  timer.start();
+						  	  }
+					    }*/
+					
+		  	    }
+		  	};
+		
+		//System.out.println("Working Directory = " + System.getProperty("user.dir"));
+		
+		ConfigurationBuilder cb = new ConfigurationBuilder(); //For Twitter
+	   	 cb.setDebugEnabled(true)
+	   	   .setOAuthConsumerKey("Ax6lCfg9Yf2Niab22e9SsY75b")
+	   	   .setOAuthConsumerSecret("3isp024VgehfZ60HwbEcBt1ZZzPyoXseaWYmO4NXxoxefKY65A")
+	   	   .setOAuthAccessToken("") // we don't need these right now as we are just calling public twitter searches
+	   	   .setOAuthAccessTokenSecret("");
+	   	 tf = new TwitterFactory(cb.build());
+	   	 twitter = tf.getInstance();
 			
 			currentDir = System.getProperty("user.dir");
 			
@@ -437,7 +574,53 @@ public class PIXELConsole extends IOIOConsoleApp {
 
 		private static void parseOption(String arg) throws BadArgumentsException {
 			
+			if (arg.startsWith("--proximity")) {
+				ProxSensor = true;
+				validCommandLine = true;
+				System.out.println("Proximity Sensor enabled");
+			}
 			
+			if (arg.startsWith("--proximitypin=")) {  //we'll use pin34 by default unless the user overrides here
+				proximityPinString_ = arg.substring(15);
+				
+				if (Float.parseFloat(proximityPinString_) > 35 || Float.parseFloat(proximityPinString_) < 31 || proximityPinString_.contains(".")) {
+					System.out.println("The proximity pin number can be 31,32,33, or 34. Defaulting to a proximity sensor pin 34...");
+				}
+				else {
+					proximityPin_ = Integer.parseInt(proximityPinString_);
+					System.out.println("Proximity Pin: " + proximityPinString_);
+				}	
+			}
+			
+			if (arg.startsWith("--proximityhigh=")) {  //the upper limit threshold for the prox sensor to trigger, ie, will trigger if goes over this number
+				String TriggerUpperThresholdString = arg.substring(16);
+				
+				if (Float.parseFloat(TriggerUpperThresholdString) > 1000 || proximityPinString_.contains(".")) {
+					System.out.println("The upper trigger threshold for the proximity sensor cannot be over 1000 and must also be a whole number. Defaulting to 500...");
+				}
+				else {
+					TriggerUpperThreshold_ = Integer.parseInt(TriggerUpperThresholdString);
+					System.out.println("Proximity Upper Trigger Threshold Override (Default:500) : " + TriggerUpperThresholdString);
+				}	
+			}
+			
+			if (arg.startsWith("--proximityshow")) {
+				System.out.println("Displaying Proximity Sensor values");
+				ProxShow = true;
+			}
+			
+			
+			if (arg.startsWith("--sensorloopdelay=")) {  //we'll use pin34 by default unless the user overrides here
+				sensorLoopDelayString_ = arg.substring(18);
+				
+				if (Float.parseFloat(sensorLoopDelayString_) < 10 || Float.parseFloat(sensorLoopDelayString_) > 5000 || sensorLoopDelayString_.contains(".")) {
+					System.out.println("The sensor loop delay must be greater than 10 and less than 5000. Defaulting to 1000...");
+				}
+				else {
+					sensorLoopDelay_ = Integer.parseInt(sensorLoopDelayString_);
+					System.out.println("Sensor Loop Delay Override (default: 500): " + sensorLoopDelayString_);
+				}	
+			}
 			
 			if (arg.startsWith("--forecast")) {
 				reportTomorrowWeather = true;
@@ -504,9 +687,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 							System.out.println("GIF found using absolute path, file name is: " + GIFfileAbsolute.getName());*/
 							
 							// gifFileName_ = gifFileName_.
-								//    substring(0,gifFileName_.lastIndexOf(File.separator));
-								
-								//gifFileName_ = GIFfileAbsolute.getName();
+							//    substring(0,gifFileName_.lastIndexOf(File.separator));
+							//gifFileName_ = GIFfileAbsolute.getName();
 							System.out.println("GIF found using absolute path, file name is: " + gifFileName_);
 					    }
 						else {
@@ -557,6 +739,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 				scrollingTextDelay_ = Integer.parseInt(scrollingTextSpeed_);
 			}	
 			
+			if (arg.startsWith("--smooth=")) {
+				String scrollingSmoothnessString = arg.substring(9);
+				scrollingSmoothness_ = Integer.parseInt(scrollingSmoothnessString);
+			}	
+			
+			
 			if (arg.startsWith("--twitter=")) {
 				twitterSearchString = arg.substring(10);
 				System.out.println("In Twitter mode with search term: " + twitterSearchString);
@@ -565,7 +753,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 				validCommandLine = true;
 				z++;
 				
-				String tweetSearchTerm = twitterSearchString;
+				//originally was here, moved to the IOIO setup routine
+				/*String tweetSearchTerm = twitterSearchString;
 			   	query = new Query(tweetSearchTerm);
 			        
 					try {
@@ -598,20 +787,30 @@ public class PIXELConsole extends IOIOConsoleApp {
 					
 					if (twitterResult == null) {
 						twitterResult = "No match found for Twitter search: " + twitterSearchString;
-					}
+					}*/
 			}	
 			
 			if (arg.startsWith("--interval=")) {
 				twitterIntervalString = arg.substring(11);
 				
-				if (Float.parseFloat(twitterIntervalString) < 10 || twitterIntervalString.contains(".") || Float.parseFloat(twitterIntervalString) > 86400) {
+				if (!twitterIntervalString.matches("[0-9]+")) {
 					System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
 				}
 				else {
-					twitterIntervalInt = Integer.parseInt(twitterIntervalString);
-					System.out.println("Twitter text from the search term will refresh every " + twitterIntervalString + " seconds");
+					if (Float.parseFloat(twitterIntervalString) < 10 || twitterIntervalString.contains(".") || Float.parseFloat(twitterIntervalString) > 86400) {
+						System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
+					}
+					else {
+						twitterIntervalInt = Integer.parseInt(twitterIntervalString);
+						System.out.println("Twitter text from the search term will refresh every " + twitterIntervalString + " seconds");
+					}
 				}
 			}	
+			
+			if (arg.startsWith("--filtertweets=")) {
+				filterTweets = true;
+				System.out.println("Filtering Tweets that have RT, contain http:// or @");
+			}
 			
 			//fix this later, not working fro some reason, twitterIntervalString is null even if --interval is there
 			/*if (twitterMode && twitterIntervalString == null) { //just prompting the user that they can specifiy a twitter refresh interval
@@ -627,7 +826,13 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--color=")) {
 				scrollingTextColor_ = arg.substring(8);
 				//System.out.println("scrolling text color is: " + scrollingTextFontSizeString);
-			}	
+			}
+			
+			if (arg.startsWith("--offset=")) {
+				String fontOffsetString = arg.substring(9);
+				fontOffset = Integer.parseInt(fontOffsetString);
+				//System.out.println("scrolling text color is: " + scrollingTextFontSizeString);
+			}
 			
 			if (arg.startsWith("--image=")) {
 				System.out.println("image file name: " + gifFileName_);
@@ -691,6 +896,108 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out.println("Daemon Mode");
 				backgroundMode = true;
 			}	
+			
+			///***************** 
+			
+			if (arg.startsWith("--qbuserid=")) {  //8 characters
+				quickBaseUserID = arg.substring(11);
+				q++;
+				System.out.println("QuickBase User ID: " + quickBaseUserID);
+			}
+				
+			if (arg.startsWith("--qbpassword=")) { //10 characters
+				quickBaseUserPassword = arg.substring(13);
+				q++;
+				System.out.println("QuickBase Password: " + quickBaseUserPassword);
+			}
+			
+			if (arg.startsWith("--qbdomain=")) { //8 characters
+				quickBaseDomain = arg.substring(11);
+				q++;
+				System.out.println("QuickBase DB Domain: " + quickBaseDomain);
+			}
+			
+			if (arg.startsWith("--qbdatabase=")) { 
+				quickBaseDBID = arg.substring(13);
+				q++;
+				System.out.println("QuickBase DB ID: " + quickBaseDBID);
+			}
+			
+			if (arg.startsWith("--qbqueryfield=")) { //12 characters
+				quickBaseQueryFieldID = arg.substring(15);
+				q++;
+				System.out.println("QuickBase Field ID to Query: " + quickBaseQueryFieldID);
+			}
+			
+			if (arg.startsWith("--qbsearchstring=")) { 
+				String quickBaseSearchTermForDescriptionFieldString = arg.substring(17);
+				q++;
+				//quickBaseSearchTermForDescriptionField = new String(quickBaseSearchTermForDescriptionFieldString.getBytes("UTF-8"), "UTF-8");
+				//quickBaseSearchTermForDescriptionField = arg.substring(17);
+				quickBaseSearchTermForDescriptionField = new String(quickBaseSearchTermForDescriptionFieldString.replace(" ", "%20")); //doesn't like it if there are spaces so need to replace space with %20
+				System.out.println("QuickBase Search String: " + quickBaseSearchTermForDescriptionField);
+			}
+			
+			if (arg.startsWith("--qbreturnfields=")) { 
+				quickBaseReturnFields = arg.substring(17);
+				q++;
+				System.out.println("QuickBase Field IDs to return: " + quickBaseReturnFields);
+			}
+			
+			if (arg.startsWith("--qbtoken=")) { //7 characters
+				quickBaseToken = arg.substring(10);
+				q++;
+				System.out.println("QuickBase Application Token #: " + quickBaseToken);
+			}
+			
+			if (arg.startsWith("--quickbase")) { 
+				System.out.println("QuickBase Mode");
+				quickbaseMode = true;
+				validCommandLine = true;
+				z++;
+				
+				//had to take this out from here and add to the IOIO setup loop, this was getting called before the above parameters were done
+				
+				/*try {
+					runQuickBase();
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}*/
+			}
+			
+			if (arg.startsWith("--qbrefresh=")) {
+				String quickBaseRefreshIntervalString = arg.substring(12);
+				
+				if (!quickBaseRefreshIntervalString.matches("[0-9]+")) {
+					System.out.println("The QuickBase refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 5 scrolling messages...");
+				}
+				else { //ok it's only a number so now let's make sure it's within the right range
+					if (Float.parseFloat(quickBaseRefreshIntervalString) < 1 || quickBaseRefreshIntervalString.contains(".")) {
+						System.out.println("The QuickBase refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 5 scrolling messages...");
+					}
+					else {
+						quickBaseRefreshInterval = Integer.parseInt(quickBaseRefreshIntervalString);
+						System.out.println("QuickBase will refresh every " + quickBaseRefreshIntervalString + " time(s) a scrolling message completes");
+					}
+				}
+			}
+			
+			if (arg.startsWith("--stock=")) { 
+				stockSymbols = arg.substring(8);
+				System.out.println("Stock symbol requested: " + stockSymbols);
+				stockMode = true;
+			}
+			
+			if (arg.startsWith("--compliments")) { 
+				stockSymbols = arg.substring(13);
+				System.out.println("Compliments mode turned on, please make sure you enabled --proximity too");
+				complimentsMode = true;
+			}
+			
 			
 			if (validCommandLine == false) {
 				throw new BadArgumentsException("Unexpected option: " + arg);
@@ -860,7 +1167,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		  	  }
 	 }
 	 
-	 private static void scrollText(final String scrollingText, boolean writeMode) 
+	 private static void scrollText(final String scrollingText, final String scrollingTextColor, final int numberLoops, boolean writeMode) 
 	    {
 		 
 		 stopExistingTimer(); 
@@ -893,44 +1200,45 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				   ActionListener ScrollingTextTimer = new ActionListener() {
 
 	    	                    public void actionPerformed(ActionEvent actionEvent) {
-	    	                    			int w = KIND.width * 2;
-	    	                    			int h = KIND.height* 2;
-	    	                   	    
-	    	                               BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+	    	                    			int messageWidth = KIND.width * 2;
+	    	                    			int messageHeight = KIND.height* 2;
+	    	                    			
+	    	                    			BufferedImage img = new BufferedImage(messageWidth, messageHeight, BufferedImage.TYPE_INT_ARGB);
 	    	                               
 	    	                               //let's set the text color
-	    	                               if (scrollingTextColor_.equals("red")) {
+	    	                               if (scrollingTextColor.equals("red")) {
 	    	                            	   textColor = Color.RED;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("green")) {
+	    	                               else if (scrollingTextColor.equals("green")) {
 	    	                            	   textColor = Color.GREEN;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("blue")) {
+	    	                               else if (scrollingTextColor.equals("blue")) {
 	    	                            	   textColor = Color.BLUE;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("cyan")) {
+	    	                               else if (scrollingTextColor.equals("cyan")) {
 	    	                            	   textColor = Color.CYAN;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("gray")) {
+	    	                               else if (scrollingTextColor.equals("gray")) {
 	    	                            	   textColor = Color.GRAY;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("magenta") || scrollingTextColor_.equals("purple")) {
+	    	                               else if (scrollingTextColor.equals("magenta") || scrollingTextColor_.equals("purple")) {
 	    	                            	   textColor = Color.MAGENTA;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("orange")) {
+	    	                               else if (scrollingTextColor.equals("orange")) {
 	    	                            	   textColor = Color.ORANGE;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("pink")) {
+	    	                               else if (scrollingTextColor.equals("pink")) {
 	    	                            	   textColor = Color.PINK;
 	    	                               }
-	    	                               else if (scrollingTextColor_.equals("yellow")) {
+	    	                               else if (scrollingTextColor.equals("yellow")) {
 	    	                            	   textColor = Color.YELLOW;
 	    	                               }
 	    	                   	    
 	    	                               Graphics2D g2d = img.createGraphics();
 	    	                               g2d.setPaint(textColor);
 	    	                               
-	    	                              // Font tr = new Font("TimesRoman", Font.PLAIN, scrollingTextFontSize_);
+	    	                              //TO DO we could add different fonts later
+	    	                               // Font tr = new Font("TimesRoman", Font.PLAIN, scrollingTextFontSize_);
 	    	                               Font tr = new Font("Arial", Font.PLAIN, scrollingTextFontSize_);
 	    	                              // Font trb = new Font("TimesRoman", Font.BOLD, scrollingTextFontSize_);
 	    	                              // Font tri = new Font("TimesRoman", Font.ITALIC, scrollingTextFontSize_);
@@ -947,7 +1255,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               g2d.setFont(tr);
 	    	                               
 	    	                               String message = null;
-	    	                               if (twitterMode) {
+	    	                               if (twitterMode && ProxTriggerDone == true) { //have to check the prox trigger as if that's not done, then it means there is an active proximity trigger going on and we want to interrupt the twitter text
 	    	                            	   message = twitterResult;
 	    	                               }
 	    	                               else {
@@ -957,7 +1265,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               FontMetrics fm = g2d.getFontMetrics();
 	    	                               
 	    	                               int y = fm.getHeight();   //30 = 30 * 16/32 = 15  
-	    	                               y = y * KIND.height/32;
+	    	                              // y = y * KIND.height/32;
+	    	                               y = y * KIND.height/(messageHeight + fontOffset);	    	                               
+	    	                              
 	    	                              // System.out.println("font height: " + y);
 
 	    	                               try 
@@ -967,6 +1277,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               catch (Exception ex) 
 	    	                               {
 	    	                                  // Logger.getLogger(ScrollingTextPanel.class.getName()).log(Level.SEVERE, null, ex);
+	    	                               }
+	    	                               
+	    	                               if (message ==null) {
+	    	                            	   message = ("Sorry, could not retrieve text, please check Internet connection");
 	    	                               }
 	    	                               
 	    	                               g2d.drawString(message, x, y);
@@ -994,28 +1308,36 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                                   }                
 	    	                               }
 	    	                                           
-	    	                               int messageWidth = fm.stringWidth(message);            
+	    	                              // int messageWidth = fm.stringWidth(message);   
+	    	                               messageWidth = fm.stringWidth(message);   
 	    	                               int resetX = 0 - messageWidth;
 	    	                               
 	    	                             
 	    	                               if(x < resetX)
 	    	                               {
-	    	                                   x = w;
+	    	                                   x = messageWidth;
 	    	                                   
 	    	                                   loopCounter++;
 	   	    	               			    
-		   	    	               			    if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
+		   	    	               			   //we have two loop statements here because some existing users are already using --loop for use cases where they need to exit the program so didn't want to screw that up, hence the extra if statement with the numberLoops parameter 
+	    	                                   if (loopMode == true && loopCounter >=loopInt) { //then we are done and let's exit out
 		   	    	               			    	if (timer != null) timer.stop();
 		   	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
-		   	    	               			    	//System.exit(0);
+		   	    	               			    	//System.exit(0); //this did not always exit
+		   	    	               					loopCounter = 0;
 		   	    	               					exit(0,200);
 		   	    	               			    }
-	    	                                   
-	    	                                   
+		   	    	               			    
+			   	    	               			if (numberLoops != 0 && loopCounter >= numberLoops) { //then we are done and let's exit out
+		   	    	               			    	if (timer != null) timer.stop();
+		   	    	               					System.out.println("We've looped " + loopCounter + " times and are now resetting the mode");
+		   	    	               					loopCounter = 0;
+		   	    	               					ProxTriggerDone = true; //let's reset the prox trigger flag so it can be triggered again
+		   	    	               					CheckandRunMode(); //now let's run the original setup and reset to the mode we were originally in per the command line parameters
+		   	    	               			    }
 	    	                               }
 	    	                               else
 	    	                               {
-	    	                                   
 	    	                                   x = x - scrollingTextDelay_;
 	    	                               }
 	                    }
@@ -1023,7 +1345,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				   
 	    				   
 	    				   //timer = new Timer(scrollingTextDelay_, ScrollingTextTimer); //the timer calls this function per the interval of fps
-	    				   timer = new Timer(100, ScrollingTextTimer);
+	    				   timer = new Timer(scrollingSmoothness_, ScrollingTextTimer);
 	    				   timer.start();
 	    	}    
 	    }
@@ -1197,11 +1519,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    
 	    private static void stopExistingTimer()
 	    {
-	        if(timer != null && timer.isRunning() )
+	        if (timer != null && timer.isRunning() )
 	        {
-	            //System.out.println("Stoping PIXEL activity in " + getClass().getSimpleName() + ".");
 	            timer.stop();
-	        }        
+	        } 
 	    }
 	 
 	 private static void setupEnvironment() {
@@ -1305,6 +1626,23 @@ public class PIXELConsole extends IOIOConsoleApp {
 		 
 		 System.out.println("CurrentResolution is: " + currentResolution + "\n");
 	 }
+	 
+	private static void getStock(String symbol) {
+		//Yahoo API here http://financequotes-api.com
+		Stock stock = YahooFinance.get(symbol);
+		 
+		BigDecimal price = stock.getQuote().getPrice();
+		stockChange = stock.getQuote().getChangeInPercent();
+		BigDecimal peg = stock.getStats().getPeg();
+		BigDecimal dividend = stock.getDividend().getAnnualYieldPercent();
+		
+		System.out.println(symbol + " Stock Price: " + price);
+		System.out.println(symbol + " Stock Price Change: " + stockChange.toString() +"%");
+		
+		stockPrice = price.toString();
+		
+	}
+
 	 
 	 private static void getWeather() {
 			
@@ -1614,37 +1952,196 @@ public class PIXELConsole extends IOIOConsoleApp {
 		 
 		 Timer etimer = new Timer(maxDelayMillis, exitTimer_); 
 		 etimer.start();
-		 
-			
 	 }
+	 
+	
+	 
+	 private static void runQuickBase() throws MalformedURLException, IOException {
+		 
+		
+		 
+		/* here is the format of the returned XML we get when we QuickBase authenticate
+		 * <qdbapi>
+		 <action>API_Authenticate</action>
+		 <errcode>0</errcode>
+		 <errtext>No error</errtext>
+		 <ticket>
+		 some_long_number
+		 </ticket>
+		 <userid>numbers.4chars</userid>
+		 </qdbapi>*/
+		 
+		    authXml = null;
+		    try
+		    {
+		       authXml  = new URL("https://" + quickBaseDomain + "/db/main?a=API_Authenticate&username=" + quickBaseUserID + "&password=" + quickBaseUserPassword).openConnection().getInputStream();
+	 		   DocumentBuilderFactory factory = DocumentBuilderFactory.
+		                                        newInstance();
+	 		   
+		       DocumentBuilder builder = factory.newDocumentBuilder();
+		       Document doc = builder.parse(authXml);
+		       
+		       try {
+		    		//optional, but recommended
+		    		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+		    		doc.getDocumentElement().normalize();
+		    	 
+		    		//System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+		    		
+		    		NodeList nList = doc.getElementsByTagName(quickBaseRootXMLNode);
+		    	 
+		    		System.out.println("----------------------------");
+		    	 
+		    		for (int temp = 0; temp < nList.getLength(); temp++) {
+		    	 
+		    			Node nNode = nList.item(temp);
+		    	 
+		    			//System.out.println("\nCurrent Element :" + nNode.getNodeName());
+		    	 
+		    			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+		    	 
+		    				Element eElement = (Element) nNode;
+		    				System.out.println("QB Auth Ticket : " + eElement.getElementsByTagName("ticket").item(0).getTextContent());
+		    				quickbaseTicket = eElement.getElementsByTagName("ticket").item(0).getTextContent();
+		    				
+		    				System.out.println("QB Auth Error Code : " + eElement.getElementsByTagName("errcode").item(0).getTextContent());
+		    				String errCode = eElement.getElementsByTagName("errcode").item(0).getTextContent();
+		    				
+		    				System.out.println("QB Auth Error Code Text : " + eElement.getElementsByTagName("errtext").item(0).getTextContent());
+		    				System.out.println("QB Auth User ID " + eElement.getElementsByTagName("userid").item(0).getTextContent());
+		    				
+		    				if (errCode.equals("0")) {
+		    					System.out.println("Yeah! QuickBase Authentication Successful...");
+		    					quickBaseAuthSuccesful = true;
+		    				}
+		    				else {
+		    					System.out.println("Sorry, QuickBase Authentication Failed!!!");
+		    					quickBaseAuthSuccesful = false;
+		    				}
+		    			}
+		    		}
+		    	    } catch (Exception e) {
+		    		e.printStackTrace();
+		    	    } 
+		   
+		    }
+		    catch (Exception ex)
+		    {
+		       System.out.println(ex.getMessage());
+		    }
+		    finally
+		    {
+		       try
+		       {
+		          if (authXml != null)
+		        	authXml.close();
+		       }
+		       catch (IOException ex)
+		       {
+		          System.out.println(ex.getMessage());
+		       }
+		    }
+		    
+		    ///**** now we have our token so let's get some data
+		    
+		    dataXml = null;
+		    
+		    try
+		    {
+		    	String URLString = "https://" + quickBaseDomain + "/db/" + quickBaseDBID +"?a=API_DoQuery&includeRids=1&ticket=" + quickbaseTicket + "&apptoken=" + quickBaseToken + "&udata=mydata&query={%27" + quickBaseQueryFieldID + "%27.CT.%27" + quickBaseSearchTermForDescriptionField + "%27}&clist=" + quickBaseReturnFields + "&slist=3&options=nosort&fmt=structured";
+		    	
+		       dataXml = new URL(URLString).openConnection().getInputStream();
+	 		   DocumentBuilderFactory factory = DocumentBuilderFactory.
+		                                        newInstance();
+	 		   
+		       DocumentBuilder builder = factory.newDocumentBuilder();
+		       Document doc = builder.parse(dataXml);
+		       
+		       try {
+		    		//optional, but recommended
+		    		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+		    		doc.getDocumentElement().normalize();
+		    	 
+		    		//System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+		    	 
+		    		NodeList nList = doc.getElementsByTagName(quickBaseDataXMLNode); //this is record by default, you should not have to change unless the QB API changes
+		    	 
+		    		System.out.println("----------------------------");
+		    		System.out.println("Total Matched Records: " + nList.getLength());
+		    		
+		    		quickBasePIXELString = "The following " + nList.getLength() + " projects are behind schedule: "; //this is the text we will send to the scrolling LED display and will be specific to your application so change accordingly
+		    	 
+		    		for (int temp = 0; temp < nList.getLength(); temp++) {
+		    	 
+		    			Node nNode = nList.item(temp);
+		    	 
+		    			//System.out.println("\nCurrent Element :" + nNode.getNodeName());
+		    	 
+		    			//******* This part of the code will be specific to your application so change accordingly *********
+		    			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+		    	 
+		    				Element eElement = (Element) nNode;
+		    				System.out.println("Project ID : " + eElement.getElementsByTagName("f").item(0).getTextContent());
+		    				
+		    				if (temp == nList.getLength() - 1) { //it's the last record so don't add the comma at the end
+		    					quickBasePIXELString = quickBasePIXELString + eElement.getElementsByTagName("f").item(0).getTextContent();
+		    				}
+		    				else {
+		    					quickBasePIXELString = quickBasePIXELString + eElement.getElementsByTagName("f").item(0).getTextContent() + ", ";
+		    				}
+		    				
+		    				System.out.println("Description : " + eElement.getElementsByTagName("f").item(1).getTextContent());
+		    				System.out.println("Priority : " + eElement.getElementsByTagName("f").item(2).getTextContent());
+		    				System.out.println("Budget " + eElement.getElementsByTagName("f").item(3).getTextContent());
+		    			}
+		    			//******************************************************************************************************
+		    		}
+		    	    } catch (Exception e) {
+		    		e.printStackTrace();
+		    	    } 
+		   
+		    }
+		    catch (Exception ex)
+		    {
+		       System.out.println(ex.getMessage());
+		    }
+		    finally
+		    {
+		       try
+		       {
+		          if (dataXml != null)
+		        	  dataXml.close();
+		       }
+		       catch (IOException ex)
+		       {
+		          System.out.println(ex.getMessage());
+		       }
+		    }
+		    
+		    if (quickBaseAuthSuccesful) {
+		    	System.out.println("LED Scrolling Text = " + quickBasePIXELString);
+		    }
+		    else {
+		    	System.out.println("Sorry, unable to authenticate to QuickBase");
+		    }
+		    
+		    if (q != 8) { //8 is the number of command line parameters required for QuickBase
+		    	System.out.println("Sorry! You didn't enter all the command line paramters that QuickBase needs. Please modify and try again.");
+		    	quickBasePIXELString = "Sorry! You didn't enter all the command line paramters that QuickBase needs. Please modify and try again.";
+			}
+		    
 
-	@Override
-	public IOIOLooper createIOIOLooper(String connectionType, Object extra) {
-		return new BaseIOIOLooper() {
-
-			@Override
-			protected void setup() throws ConnectionLostException,
-					InterruptedException {
-		    	//**** let's get IOIO version info for the About Screen ****
-	  			pixelFirmware = ioio_.getImplVersion(v.APP_FIRMWARE_VER);
-	  			pixelHardwareID = ioio_.getImplVersion(v.HARDWARE_VER);
-	  			//pixelBootloader = ioio_.getImplVersion(v.BOOTLOADER_VER);
-	  			//IOIOLibVersion = ioio_.getImplVersion(v.IOIOLIB_VER);
-	  			//**********************************************************
-	  			
-  				PIXELConsole.this.ioiO = ioio_;
-  				
-  				setupEnvironment();  //here we set the PIXEL LED matrix type
-  				
-                //pixel.matrix = ioio_.openRgbLedMatrix(pixel.KIND);   //AL could not make this work, did a quick hack, Roberto probably can change back to the right way
-                pixel.matrix = ioio_.openRgbLedMatrix(KIND);
-                pixel.ioiO = ioio_;
-                System.out.println("Found PIXEL: " + pixel.matrix + "\n");
+	    	scrollText(quickBasePIXELString, scrollingTextColor_, quickBaseRefreshInterval,false); //0 means loop forever
+		    
+		    //TO DO add a loop if the auth fails to try again after x seconds
+		    // http://www.mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/  //this problems only happened on my PC, was fine when compiling on Mac
+		   //TO DO put the above in a timer such that it re-runs itself every x minutes as defined by a command line
+	 }
+	 
+	 private static void CheckandRunMode() {
 			
-			//need to add if statements here, what happens if they choose weather and gif
-			
-				if (gifModeExternal == true) {
-					
+			if (gifModeExternal == true) {
+							
 					if (writeMode == true) {
 						streamGIF(true); //write to PIXEL's SD card
 					}
@@ -1661,21 +2158,408 @@ public class PIXELConsole extends IOIOConsoleApp {
 				else if (scrollingTextMode == true) {
 					
 					if (twitterMode) { //so we're in twitter mode so let's start the twitter search timer
+						runTwitter();
 						twitterTimer = new Timer(twitterIntervalInt * 1000, TwitterTimer);
 						twitterTimer.start();
-						scrollText(twitterResult, writeMode);
+						scrollText(twitterResult, scrollingTextColor_, 0,writeMode); //0 menas loop forever
 					}
 					else {
-						scrollText(scrollingText_, writeMode); //write is not supported, just stream right now
+						scrollText(scrollingText_, scrollingTextColor_, 0, writeMode); //write is not supported, just stream right now
 					}
 				}
+				
+				else if (quickbaseMode == true) {
+					//TO DO add the timer in here just like we did with Twitter
+					//TO DO I suppose we'll also need to ensure that the quickbase data is retrieved before this IOIO Setup starts
+					
+					try {
+							runQuickBase();
+						} catch (MalformedURLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				}
+		}
+	 
+	 private static void runCompliments() {
+		 
+		 int randomInt = (int)(60.0 * Math.random());
+		 System.out.println("pseudo random number between 0 and 60 : " + randomInt );
+		 
+		 switch (randomInt) { 
+	        
+		 	case 0:
+	        	complimentString = "You could probably lead a rebellion";	
+	        	compliementColor = "orange";
+	        	break;
+		 	case 1:
+	        	complimentString = "Smile, you're beautiful";	
+	        	compliementColor = "cyan";
+	        	break;
+	        case 2:
+	        	complimentString = "You look great!";	
+	        	compliementColor = "green";
+	        	break;
+	        case 3:
+	        	complimentString = "Is that a new Shirt?";	
+	        	compliementColor = "purple";
+	            break;
+	        case 4:
+	        	complimentString = "Your hair rocks";	
+	        	compliementColor = "green";	
+	            break;	                
+	        case 5:
+	        	complimentString = "I like your style";	
+	        	compliementColor = "yellow";	
+	            break;    
+	        case 6:
+	        	complimentString = "Have you been working out?";	
+	        	compliementColor = "cyan";	            	
+	        	break;
+	        case 7:
+	        	complimentString = "The Force is strong with you";	
+	        	compliementColor = "purple";		
+	            break;
+	        case 8:
+	        	complimentString = "You're the Bee's Knees";	
+	        	compliementColor = "green";	
+	            break;
+	        case 9:
+	        	complimentString = "Is it hot or just you?";	
+	        	compliementColor = "red";
+	            break;	                
+	        case 10:
+	        	complimentString = "You complete me";	
+	        	compliementColor = "grey";	
+	            break;    
+	        case 11:
+	        	complimentString = "Hey good looking";	
+	        	compliementColor = "purple";	            	
+	        	break;
+	        case 12:
+	        	complimentString = "You're pretty high on my list of people with whom I would want to be stranded on an island";	
+	        	compliementColor = "yellow";
+	            break;
+	        case 13:
+	        	complimentString = "I like your shoes";	
+	        	compliementColor = "cyan";		
+	            break;
+	        case 14:
+	        	complimentString = "I admire your skills";	
+	        	compliementColor = "orange";	
+	            break;	                
+	        case 15:
+	        	complimentString = "Your Skin is Radiant";	
+	        	compliementColor = "purple";
+	            break;    
+	        case 16:
+	        	complimentString = "You're so smart";	
+	        	compliementColor = "purple";		            	
+	        	break;
+	        case 17:
+	        	complimentString = "You smell great";	
+	        	compliementColor = "orange";	
+	            break;
+	        case 18:
+	        	complimentString = "You make me smile";	
+	        	compliementColor = "cyan";	
+	            break;
+	        case 19:
+	        	complimentString = "You look stunning";	
+	        	compliementColor = "pink";	
+	            break;	                
+	        case 20:
+	        	complimentString = "Even my cat likes you";	
+	        	compliementColor = "green";
+	            break;    
+	        case 21:
+	        	complimentString = "You deserve a promotion";	
+	        	compliementColor = "green";		            	
+	        	break;
+	        case 22:
+	        	complimentString = "I wish I was your mirror";	
+	        	compliementColor = "purple";
+	            break; 
+	        case 23:
+	        	complimentString = "Take a break; you've earned it";	
+	        	compliementColor = "orange";
+	            break;
+	        case 24:
+	        	complimentString = "I would share my dessert with you";	
+	        	compliementColor = "pink";
+	            break; 
+	        case 25:
+	        	complimentString = "All of your ideas are brilliant!";	
+	        	compliementColor = "green";
+	            break; 
+	        case 26:
+	        	complimentString = "You make my data circuits skip a beat";	
+	        	compliementColor = "yellow";
+	            break; 
+	        case 27:
+	        	complimentString = "If I had to choose between you or Mr. Rogers, it would be you";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 28:
+	        	complimentString = "I support all of your decisions";	
+	        	compliementColor = "green";
+	            break; 
+	        case 29:
+	        	complimentString = "You could survive a zombie apocalypse";	
+	        	compliementColor = "purple";
+	            break; 
+	        case 30:
+	        	complimentString = "I wish I could move your furniture";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 31:
+	        	complimentString = "You're nicer than a day on the beach";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 32:
+	        	complimentString = "I would do your taxes any day";	
+	        	compliementColor = "green";
+	            break; 
+	        case 33:
+	        	complimentString = "You're more fun than bubble wrap";	
+	        	compliementColor = "blue";
+	            break; 
+	        case 34:
+	        	complimentString = "You're invited to my birthday party";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 35:
+	        	complimentString = "You could probably get a bird to land on your shoulder and hang out with you";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 36:
+	        	complimentString = "My mom always asks me why I can't be more like you";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 37:
+	        	complimentString = "I am having trouble coming up with a compliment worthy enough for you";	
+	        	compliementColor = "green";
+	            break; 
+	        case 38:
+	        	complimentString = "If we were playing kickball, I'd pick you first";	
+	        	compliementColor = "grey";
+	            break; 
+	        case 39:
+	        	complimentString = "You're cooler than ice on the rocks";	
+	        	compliementColor = "blue";
+	            break; 
+	        case 40:
+	        	complimentString = "I wish I could choose your handwriting as a font";	
+	        	compliementColor = "pink";
+	            break; 
+	        case 41:
+	        	complimentString = "I named all my appliances after you";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 42:
+	        	complimentString = "Can you teach me how to be as awesome as you?";	
+	        	compliementColor = "yellow";
+	            break; 
+	        case 43:
+	        	complimentString = "You could invent words and people would use them";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 44:
+	        	complimentString = "You have powerful sweaters";	
+	        	compliementColor = "pink";
+	            break; 
+	        case 45:
+	        	complimentString = "You are better than unicorns and sparkles combined!";	
+	        	compliementColor = "yellow";
+	            break; 
+	        case 46:
+	        	complimentString = "You are the watermelon in my fruit salad. Yum!";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 47:
+	        	complimentString = "If you were in a movie you wouldn't get killed off";	
+	        	compliementColor = "blue";
+	            break; 
+	        case 48:
+	        	complimentString = "They should name an ice cream flavor after you";	
+	        	compliementColor = "red";
+	            break; 
+	        case 49:
+	        	complimentString = "I would volunteer to take your place in the Hunger Games";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 50:
+	        	complimentString = "I'd let you steal the white part of my Oreo";	
+	        	compliementColor = "grey";
+	            break; 
+	        case 51:
+	        	complimentString = "Your mouse told me that you have very soft hands";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 52:
+	        	complimentString = "I like your socks";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 53:
+	        	complimentString = "How do you get your hair to look that great?";	
+	        	compliementColor = "green";
+	            break; 
+	        case 54:
+	        	complimentString = "Say, aren't you that famous model from TV?";	
+	        	compliementColor = "blue";
+	            break; 
+	        case 55:
+	        	complimentString = "I would love to visit you, but I live on the Internet";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 56:
+	        	complimentString = "If I freeze, it's not a computer virus. I was just stunned by your awesomeness";	
+	        	compliementColor = "yellow";
+	            break; 
+	        case 57:
+	        	complimentString = "If I had to choose between you or Mr. Rogers, it would be you";	
+	        	compliementColor = "cyan";
+	            break; 
+	        case 58:
+	        	complimentString = "You could go longer without a shower than most people";	
+	        	compliementColor = "orange";
+	            break; 
+	        case 59:
+	        	complimentString = "You have ten of the best fingers I have ever seen!";	
+	        	compliementColor = "yellow";
+	            break; 
+	        case 60:
+	        	complimentString = "You're pretty high on my list of people with whom I would want to be stranded on an island";	
+	        	compliementColor = "grey";
+	            break; 
+	        default :
+	        	complimentString = "I'd let you steal the white part of my Oreo";	
+	        	compliementColor = "yellow";
+	            break; 
+	  }	   
+	 }
+	 
+	 private static void runTwitter() {
+		 String tweetSearchTerm = twitterSearchString;
+		   	query = new Query(tweetSearchTerm);
+		        
+				try {
+					result = twitter.search(query);
+					System.out.println("Number of matched tweets: " + result.getCount());
+				} catch (TwitterException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				for (Status status : result.getTweets()) {
+					
+					if (filterTweets) { // then we don't want @ mentions or http:// tweets
+						if (!status.getText().contains("RT") && !status.getText().contains("http://") && !status.getText().contains("@")) {   //retweets have "RT" in them, we don't want retweets in this case
+							
+							//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+							twitterResult = status.getText();
+							System.out.println(status.getText());
+			                //TO DO have seen some cases where no results are returned, need to fix that and also we should show a different tweet if no new one
+						}
+					}
+					
+					else {
+						if (!status.getText().contains("RT")) {
+							
+							//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
+							twitterResult = status.getText();
+							System.out.println(status.getText()); //it's the last one so let's display it
+						}
+					}
+		        }
+				
+				if (twitterResult == null) {
+					twitterResult = "No match found for Twitter search: " + twitterSearchString;
+				}
+	 }
+		 
+	
+
+	@Override
+	public IOIOLooper createIOIOLooper(String connectionType, Object extra) {
+		return new BaseIOIOLooper() {
 			
+			private AnalogInput prox_;
+	  		float proxValue;
+	  		
+			@Override
+			protected void setup() throws ConnectionLostException,
+				InterruptedException {
+		    	//**** let's get IOIO version info for the About Screen ****
+	  			pixelFirmware = ioio_.getImplVersion(v.APP_FIRMWARE_VER);
+	  			pixelHardwareID = ioio_.getImplVersion(v.HARDWARE_VER);
+	  			//pixelBootloader = ioio_.getImplVersion(v.BOOTLOADER_VER);
+	  			//IOIOLibVersion = ioio_.getImplVersion(v.IOIOLIB_VER);
+	  			//**********************************************************
+	  			
+  				PIXELConsole.this.ioiO = ioio_;
+  				
+  				setupEnvironment();  //here we set the PIXEL LED matrix type
+  				
+  				
+  				prox_ = ioio_.openAnalogInput(proximityPin_);
+                //pixel.matrix = ioio_.openRgbLedMatrix(pixel.KIND);   //AL could not make this work, did a quick hack, Roberto probably can change back to the right way
+                pixel.matrix = ioio_.openRgbLedMatrix(KIND);
+                pixel.ioiO = ioio_;
+                System.out.println("Found PIXEL: " + pixel.matrix + "\n");
+			
+                CheckandRunMode();
 			}
 
+			
+			
 			@Override
 			public void loop() throws ConnectionLostException,
 					InterruptedException {
-				Thread.sleep(10);
+				
+				//this is where you can add your own sensor input code
+				
+				if (ProxSensor) {
+					proxValue = prox_.read();
+	  	  			proxValue = proxValue * 1000;	
+	  	  			int proxInt = (int)proxValue;
+	  	  			System.out.println("Prox Sensor Value: " + proxInt);
+	  	  			
+		  	  	///******** we will interrupt any scrolling text with a stock readout if that is turned on 
+	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && complimentsMode == true) {
+	  	  				ProxTriggerDone = false;
+
+	  	                runCompliments(); //get compliment with pseudo random number generator
+	  	                
+	  	                x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
+	  	                scrollText(complimentString, compliementColor, 1,false);
+	  	  			}
+	  	  			//**********************************************************************************
+	  	  		
+	  	  		
+	  	  			///******** we will interrupt any scrolling text with a stock readout if that is turned on 
+	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && stockMode == true) {
+	  	  				ProxTriggerDone = false;
+	  	  				getStock(stockSymbols);
+	  	  				
+	  	  				String StockScrollColor = "green"; //what color for the scrolling stock ticket
+	  	  				if (stockChange.signum() > 0) {
+	  	  					 StockScrollColor = "green";
+	  	  				}
+	  	  				else {
+	  	  					 StockScrollColor = "red";
+	  	  				}
+	  	  				
+	  	  				x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
+	  	  				scrollText(stockSymbols + ": " + stockPrice + " Change " + stockChange.toString() + "%", StockScrollColor, 1,false);
+	  	  			}
+	  	  			//**********************************************************************************
+	  	  			
+				}
+				
+				Thread.sleep(sensorLoopDelay_);  //default is 500
 			}
 		};
 	}
