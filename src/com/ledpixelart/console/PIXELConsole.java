@@ -293,7 +293,7 @@ public class PIXELConsole extends IOIOConsoleApp {
     private static String quickBaseDataXMLNode = "record"; //you should NOT need to change this
     private static String quickBaseQueryFieldID = null;
     private static String quickBaseReturnFields = null;
-    private static int    quickBaseRefreshInterval = 5;
+    private static int    quickBaseRefreshInterval = 25;
     ///**************************************************************
     
     private static String proximityPinString_;
@@ -1200,10 +1200,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				   ActionListener ScrollingTextTimer = new ActionListener() {
 
 	    	                    public void actionPerformed(ActionEvent actionEvent) {
-	    	                    			int messageWidth = KIND.width * 2;
-	    	                    			int messageHeight = KIND.height* 2;
+	    	                    			int w = KIND.width * 2;
+	    	                    			int h = KIND.height* 2;
 	    	                    			
-	    	                    			BufferedImage img = new BufferedImage(messageWidth, messageHeight, BufferedImage.TYPE_INT_ARGB);
+	    	                    			BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 	    	                               
 	    	                               //let's set the text color
 	    	                               if (scrollingTextColor.equals("red")) {
@@ -1266,7 +1266,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                               
 	    	                               int y = fm.getHeight();   //30 = 30 * 16/32 = 15  
 	    	                              // y = y * KIND.height/32;
-	    	                               y = y * KIND.height/(messageHeight + fontOffset);	    	                               
+	    	                               y = y * KIND.height/(h + fontOffset);	    	                               
 	    	                              
 	    	                              // System.out.println("font height: " + y);
 
@@ -1308,14 +1308,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	                                   }                
 	    	                               }
 	    	                                           
-	    	                              // int messageWidth = fm.stringWidth(message);   
-	    	                               messageWidth = fm.stringWidth(message);   
+	    	                               int messageWidth = fm.stringWidth(message);   
+	    	                              // messageWidth = fm.stringWidth(message);   
 	    	                               int resetX = 0 - messageWidth;
 	    	                               
 	    	                             
 	    	                               if(x < resetX)
 	    	                               {
-	    	                                   x = messageWidth;
+	    	                                   x = w;
 	    	                                   
 	    	                                   loopCounter++;
 	   	    	               			    
