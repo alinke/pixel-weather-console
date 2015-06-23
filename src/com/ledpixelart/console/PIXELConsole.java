@@ -1627,7 +1627,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		 System.out.println("CurrentResolution is: " + currentResolution + "\n");
 	 }
 	 
-	private static void getStock(String symbol) {
+	private static String getStock(String symbol) throws java.io.IOException {
 		//Yahoo API here http://financequotes-api.com
 		Stock stock = YahooFinance.get(symbol);
 		 
@@ -1639,7 +1639,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out.println(symbol + " Stock Price: " + price);
 		System.out.println(symbol + " Stock Price Change: " + stockChange.toString() +"%");
 		
-		stockPrice = price.toString();
+		/*stockPrice = price.toString();
+		return stockPrice;*/
+		return price.toString();
 		
 	}
 
@@ -2542,18 +2544,27 @@ public class PIXELConsole extends IOIOConsoleApp {
 	  	  			///******** we will interrupt any scrolling text with a stock readout if that is turned on 
 	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && stockMode == true) {
 	  	  				ProxTriggerDone = false;
-	  	  				getStock(stockSymbols);
 	  	  				
-	  	  				String StockScrollColor = "green"; //what color for the scrolling stock ticket
-	  	  				if (stockChange.signum() > 0) {
-	  	  					 StockScrollColor = "green";
-	  	  				}
-	  	  				else {
-	  	  					 StockScrollColor = "red";
-	  	  				}
+	  	  				try {
+							stockPrice = getStock(stockSymbols);
+							
+							String StockScrollColor = "green"; //what color for the scrolling stock ticket
+		  	  				if (stockChange.signum() > 0) {
+		  	  					 StockScrollColor = "green";
+		  	  				}
+		  	  				else {
+		  	  					 StockScrollColor = "red";
+		  	  				}
+		  	  				
+		  	  				x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
+		  	  				scrollText(stockSymbols + ": " + stockPrice + " Change " + stockChange.toString() + "%", StockScrollColor, 1,false);
+						} catch (IOException e) {
+							scrollText("Could not get stock, pls check Internet connection", "red", 1,false);
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 	  	  				
-	  	  				x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
-	  	  				scrollText(stockSymbols + ": " + stockPrice + " Change " + stockChange.toString() + "%", StockScrollColor, 1,false);
+	  	  				
 	  	  			}
 	  	  			//**********************************************************************************
 	  	  			
