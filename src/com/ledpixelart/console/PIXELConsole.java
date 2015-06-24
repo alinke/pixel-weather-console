@@ -1641,8 +1641,13 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 		/*stockPrice = price.toString();
 		return stockPrice;*/
-		return price.toString();
 		
+		if (price.toString() == null) {
+			return "Connectivity Problem";
+		}
+		else {
+			return price.toString();
+		}
 	}
 
 	 
@@ -2142,7 +2147,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 	 
 	 private static void CheckandRunMode() {
 			
-			if (gifModeExternal == true) {
+		 
+		 
+		 if (gifModeExternal == true) {
 							
 					if (writeMode == true) {
 						streamGIF(true); //write to PIXEL's SD card
@@ -2184,6 +2191,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 							e.printStackTrace();
 						}
 				}
+		 
+		 	ProxTriggerDone = true;	//had to add this because if the user holds hand in front of prox sensor continuously, for some reason we weren't resetting this prox trigger flag but this add here seems to fix it
 		}
 	 
 	 private static void runCompliments() {
@@ -2527,7 +2536,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 					proxValue = prox_.read();
 	  	  			proxValue = proxValue * 1000;	
 	  	  			int proxInt = (int)proxValue;
-	  	  			System.out.println("Prox Sensor Value: " + proxInt);
+	  	  			System.out.println("Prox Sensor Value: " + proxInt + " " + ProxTriggerDone);
 	  	  			
 		  	  	///******** we will interrupt any scrolling text with a stock readout if that is turned on 
 	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && complimentsMode == true) {
@@ -2536,11 +2545,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 	  	                runCompliments(); //get compliment with pseudo random number generator
 	  	                
 	  	                x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
+	  	                loopCounter = 0;
 	  	                scrollText(complimentString, compliementColor, 1,false);
 	  	  			}
 	  	  			//**********************************************************************************
 	  	  		
-	  	  		
+	  	  		    
+	  	  			
+	  	  			
 	  	  			///******** we will interrupt any scrolling text with a stock readout if that is turned on 
 	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && stockMode == true) {
 	  	  				ProxTriggerDone = false;
@@ -2557,11 +2569,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 		  	  				}
 		  	  				
 		  	  				x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
+		  	  				loopCounter = 0;
 		  	  				scrollText(stockSymbols + ": " + stockPrice + " Change " + stockChange.toString() + "%", StockScrollColor, 1,false);
 						} catch (IOException e) {
 							scrollText("Could not get stock, pls check Internet connection", "red", 1,false);
 							// TODO Auto-generated catch block
 							e.printStackTrace();
+							ProxTriggerDone = true;
+							loopCounter = 0;
 						}
 	  	  				
 	  	  				
