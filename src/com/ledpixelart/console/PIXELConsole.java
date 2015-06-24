@@ -2076,8 +2076,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 		    		System.out.println("----------------------------");
 		    		System.out.println("Total Matched Records: " + nList.getLength());
 		    		
-		    		quickBasePIXELString = "The following " + nList.getLength() + " projects are behind schedule: "; //this is the text we will send to the scrolling LED display and will be specific to your application so change accordingly
-		    	 
+		    		if (nList.getLength() == 1) {
+		    			quickBasePIXELString = nList.getLength() + " project behind schedule: "; //this is the text we will send to the scrolling LED display and will be specific to your application so change accordingly
+		    		}
+		    		
+		    		else {
+		    			quickBasePIXELString = nList.getLength() + " projects behind schedule: "; //this is the text we will send to the scrolling LED display and will be specific to your application so change accordingly
+		    		}
+		    		
 		    		for (int temp = 0; temp < nList.getLength(); temp++) {
 		    	 
 		    			Node nNode = nList.item(temp);
