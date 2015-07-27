@@ -1075,7 +1075,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out.println("SNOW Group 2 GUID: " + snowGroup2GUID);
 			}
 			
-			if (arg.startsWith("--snowgroupname2=")) { 
+			if (arg.startsWith("--snowgroup2name=")) { 
 				snowGroup2Name = arg.substring(17);
 				s++;
 				System.out.println("SNOW Group 2 Name: " + snowGroup2Name);
