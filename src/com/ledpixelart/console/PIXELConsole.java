@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
@@ -32,6 +33,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +44,7 @@ import javax.swing.Timer;
 import javax.xml.bind.JAXBContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.xpath.XPath;
@@ -48,10 +52,19 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.onebeartoe.pixel.hardware.Pixel;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -59,7 +72,13 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.w3c.dom.CharacterData;
 
+//import twitter4j.JSONArray;
+//import twitter4j.JSONException;
+//import twitter4j.JSONObject;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Status;
@@ -72,6 +91,12 @@ import yahoofinance.YahooFinance;
 
 
 import java.util.List;
+//import org.json.simple.*;
+//import org.json.simple.parser.JSONParser;
+//import org.json.simple.parser.ParseException;
+//import org.json.simple.JSONArray;
+//import org.json.simple.JSONObject;
+
 //import org.jdom2.Document;
 //import org.jdom2.Element;
 //import org.jdom2.JDOMException;
@@ -119,6 +144,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static int z = 0;
 	
 	private static int q = 0;
+	
+	private static int s = 0;
 	    
     private static int numFrames = 0;
     
@@ -295,6 +322,27 @@ public class PIXELConsole extends IOIOConsoleApp {
     private static String quickBaseReturnFields = null;
     private static int    quickBaseRefreshInterval = 25;
     ///**************************************************************
+ 
+    ///*********** Edit Service Now Parameters Here ******************
+    private static String snowDomain = "";
+    private static String snowUserID = "";
+    private static String snowUserPassword = "";
+    private static String snowDataXMLNode = "count"; //you should NOT need to change this
+    //private static ArrayList<snowGroupPair> values = new ArrayList<snowGroupPair>(); //we use for the SNOW Group name and GUI, ex. CRM, 3D8fe5d018006981001e5e98712087dadc
+    private static String snowGroup1GUID = "";
+    private static String snowGroup2GUID = "";
+    private static String snowGroup1Name = "";
+    private static String snowGroup2Name = "";
+    private static String snowBaseQuery = "active%3Dtrue%5EnumberSTARTSWITHINC%5EstateIN1%2C2%2C3%2C4%5E";
+    private static String snowPriorityQuery ="priorityIN1%2C2"; //should not need to change this, note we didn't inlcude the %5E so don't forget to add that in later
+    private static String snowSLAExceededQuery ="u_sla_alertSTARTSWITHRed"; //should not need to change this
+    private static int    snowRefreshInterval = 20;
+    private static boolean snowMode = false;
+    private static String snowPIXELString;
+    private static String snowGroupOpen;
+    private static String snowGroupPriority;
+    private static String snowGroupExceededSLA;
+    ///**************************************************************
     
     private static String proximityPinString_;
     
@@ -307,6 +355,8 @@ public class PIXELConsole extends IOIOConsoleApp {
     private static boolean ProxTriggered = false;
     
     private static boolean ProxTriggerDone = true;
+    
+    private static boolean debug_ = false;
     
     private static int TriggerUpperThreshold_ = 500;
     
@@ -338,7 +388,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console V2.5 ***");
+		System.out.println("*** PIXEL: Console V2.6 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -375,7 +425,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out.println("Ex. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write");
 		
 		System.out.println("\n");
-		System.out.println("SCROLLING TEXT MODE / QUICKBASE SEARCH / TWITTER FEED");
+		System.out.println("SCROLLING TEXT MODE / QUICKBASE SEARCH / SERVICE NOW / TWITTER FEED");
 		System.out.println();
 		System.out
 		.println("--quickbase    QuickBase mode, send some scrolling text from QuickBase");
@@ -398,6 +448,22 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out
 		.println("--qbrefresh=<number>   How many times to scroll result before checking QuickBase again for the latest data: Omit this for the default of 10");
 		System.out
+		.println("--snow   Service Now mode, show status of two Service Now Queues/Groups, total open, total high priority, and total exceeded SLA");
+		System.out
+		.println("--snowuserid=<text>   Service Now id for API access");
+		System.out
+		.println("--snowpassword=<text>  Service Now password for API access");
+		System.out
+		.println("--snowdomain=<text>  Service now URL ex. x.service-now.com");
+		System.out
+		.println("--snowgroup1id=<text>  GUID of the desired Service Now Queue/Group 1");
+		System.out
+		.println("--snowgroup1name=<text>  Name to display on the scrolling LED text for Service Now Queue/Group 1");
+		System.out
+		.println("--snowgroup2id=<text>  GUID of the desired Service Now Queue/Group 2");
+		System.out
+		.println("--snowgroup2name=<text>  Name to display on the scrolling LED text for Service Now Queue/Group 2");
+		System.out
 		.println("--text=\"your scrolling text\"  Scrolls your message.  Make sure to enclose your text in double quotes");
 		System.out
 		.println("--twitter=\"your Twitter search term\"    Make sure to enclose search term in double quotes. Use --text or --twitter but not both.");
@@ -419,6 +485,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 		.println("--offset=<number>   Use this if your scrolling text is not centered, a postive numbers moves the text up and negative moves down, just experiment until your text is centered"); 
 		System.out
 		.println("--proximity  Turns on the proximity sensor for interactive applications"); 
+		System.out
+		.println("--debug  Displays the proximity sensor value on the console"); 
 		System.out
 		.println("--proximitypin=<number>   The default proximity pin is 34, use this to specific a different pin, options are 31,32,33, or 34"); 
 		System.out
@@ -897,6 +965,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 				backgroundMode = true;
 			}	
 			
+			if (arg.startsWith("--debug")) { //not using this one
+				System.out.println("Debug Mode");
+				debug_ = true;
+			}	
+			
 			///***************** 
 			
 			if (arg.startsWith("--qbuserid=")) {  //8 characters
@@ -908,7 +981,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--qbpassword=")) { //10 characters
 				quickBaseUserPassword = arg.substring(13);
 				q++;
-				System.out.println("QuickBase Password: " + quickBaseUserPassword);
 			}
 			
 			if (arg.startsWith("--qbdomain=")) { //8 characters
@@ -932,8 +1004,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--qbsearchstring=")) { 
 				String quickBaseSearchTermForDescriptionFieldString = arg.substring(17);
 				q++;
-				//quickBaseSearchTermForDescriptionField = new String(quickBaseSearchTermForDescriptionFieldString.getBytes("UTF-8"), "UTF-8");
-				//quickBaseSearchTermForDescriptionField = arg.substring(17);
 				quickBaseSearchTermForDescriptionField = new String(quickBaseSearchTermForDescriptionFieldString.replace(" ", "%20")); //doesn't like it if there are spaces so need to replace space with %20
 				System.out.println("QuickBase Search String: " + quickBaseSearchTermForDescriptionField);
 			}
@@ -944,7 +1014,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out.println("QuickBase Field IDs to return: " + quickBaseReturnFields);
 			}
 			
-			if (arg.startsWith("--qbtoken=")) { //7 characters
+			if (arg.startsWith("--qbtoken=")) { 
 				quickBaseToken = arg.substring(10);
 				q++;
 				System.out.println("QuickBase Application Token #: " + quickBaseToken);
@@ -967,6 +1037,114 @@ public class PIXELConsole extends IOIOConsoleApp {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}*/
+			}
+			
+			
+			if (arg.startsWith("--snowuserid=")) {  
+				snowUserID = arg.substring(13);
+				s++;
+				System.out.println("SNOW User ID: " + snowUserID);
+			}
+				
+			if (arg.startsWith("--snowpassword=")) { 
+				snowUserPassword = arg.substring(15);
+				s++;
+			}
+			
+			if (arg.startsWith("--snowdomain=")) { 
+				snowDomain = arg.substring(13);
+				s++;
+				System.out.println("SNOW Domain: " + snowDomain);
+			}
+			
+			if (arg.startsWith("--snowgroup1id=")) { 
+				snowGroup1GUID = arg.substring(15);
+				s++;
+				System.out.println("SNOW Group 1 GUID: " + snowGroup1GUID);
+			}
+			
+			if (arg.startsWith("--snowgroup1name=")) { 
+				snowGroup1Name = arg.substring(17);
+				s++;
+				System.out.println("SNOW Group Name 1: " + snowGroup1Name);
+			}
+			
+			if (arg.startsWith("--snowgroup2id=")) { 
+				snowGroup2GUID = arg.substring(15);
+				s++;
+				System.out.println("SNOW Group 2 GUID: " + snowGroup2GUID);
+			}
+			
+			if (arg.startsWith("--snowgroupname2=")) { 
+				snowGroup2Name = arg.substring(17);
+				s++;
+				System.out.println("SNOW Group 2 Name: " + snowGroup2Name);
+			}
+						
+			if (arg.startsWith("--snow")) { 
+				System.out.println("Service Now Mode");
+				snowMode = true;
+				validCommandLine = true;
+				z++;
+				
+			/*	try {
+						try {
+							runSNOW("CRM", snowGroup1GUID);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (ParserConfigurationException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (SAXException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						String snowPIXELString1 = snowPIXELString;
+						
+						try {
+							runSNOW("VC", snowGroup2GUID);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (ParserConfigurationException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (SAXException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						String snowPIXELString2 = snowPIXELString;
+						snowPIXELString = snowPIXELString1 + " " + snowPIXELString2;
+						System.out.println(snowPIXELString);
+				
+				
+						} catch (MalformedURLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}*/
+			}
+			
+			if (arg.startsWith("--snowrefresh=")) {
+				String snowRefreshIntervalString = arg.substring(14);
+				
+				if (!snowRefreshIntervalString.matches("[0-9]+")) {
+					System.out.println("The Service Now refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 20 scrolling messages...");
+				}
+				else { //ok it's only a number so now let's make sure it's within the right range
+					if (Float.parseFloat(snowRefreshIntervalString) < 1 || snowRefreshIntervalString.contains(".")) {
+						System.out.println("The Service Now refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 20 scrolling messages...");
+					}
+					else {
+						snowRefreshInterval = Integer.parseInt(snowRefreshIntervalString);
+						System.out.println("Service Now will refresh every " + snowRefreshIntervalString + " time(s) a scrolling message completes");
+					}
+				}
 			}
 			
 			if (arg.startsWith("--qbrefresh=")) {
@@ -1002,6 +1180,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (validCommandLine == false) {
 				throw new BadArgumentsException("Unexpected option: " + arg);
 			}
+			
+			
+			//after here we go to the ioio loop
+			
 		}
 		
 		private static class BadArgumentsException extends Exception {
@@ -1063,8 +1245,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
 	
 	}
-	
-	
 	
 	
 	 private static void streamGIF(boolean writeMode) 
@@ -2151,7 +2331,150 @@ public class PIXELConsole extends IOIOConsoleApp {
 		   //TO DO put the above in a timer such that it re-runs itself every x minutes as defined by a command line
 	 }
 	 
-	 private static void CheckandRunMode() {
+	 private static void runSNOW(String snowGroupName, String snowGroupGUID) throws MalformedURLException, IOException, ParserConfigurationException, SAXException {
+		 
+				 
+		 String responseBody = null;
+		 
+	        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+	        credsProvider.setCredentials(
+	                new AuthScope(new HttpHost(snowDomain)),
+	                new UsernamePasswordCredentials(snowUserID, snowUserPassword));
+	        CloseableHttpClient httpclient = HttpClients.custom()
+	                .setDefaultCredentialsProvider(credsProvider)
+	                .build();
+	 
+	        //let's get the total number of open tickets in this queue
+	        try {
+	        	HttpGet httpget = new HttpGet("https://" + snowDomain + "/api/now/stats/incident?sysparm_query=" + snowBaseQuery + "assignment_group%" + snowGroupGUID + "&sysparm_count=true&sysparm_avg_fields=priority&sysparm_group_by=assignment_group&sysparm_display_value=true");
+	        	httpget.setHeader("Accept", "application/xml");
+	            System.out.println("Executing request " + httpget.getRequestLine());
+	            CloseableHttpResponse response = httpclient.execute(httpget);
+	            try {
+	                System.out.println("----------------------------------------");
+	                System.out.println(response.getStatusLine());
+	                responseBody = EntityUtils.toString(response.getEntity());
+	                System.out.println(responseBody);
+	            } finally {
+	                response.close();
+	            }
+	        } finally {
+	            //httpclient.close();
+	        }
+	        
+	        snowGroupOpen = returnXMLNodeValue(snowDataXMLNode,responseBody);
+	        
+	        //let's get the tickets in this queue that are of high priority
+	        try {
+	        	HttpGet httpget = new HttpGet("https://" + snowDomain + "/api/now/stats/incident?sysparm_query=" + snowBaseQuery + "assignment_group%" + snowGroupGUID + "%5E" + snowPriorityQuery + "&sysparm_count=true&sysparm_avg_fields=priority&sysparm_group_by=assignment_group&sysparm_display_value=true");
+	        	httpget.setHeader("Accept", "application/xml");
+	            System.out.println("Executing request " + httpget.getRequestLine());
+	            CloseableHttpResponse response = httpclient.execute(httpget);
+	            try {
+	                System.out.println("----------------------------------------");
+	                System.out.println(response.getStatusLine());
+	                responseBody = EntityUtils.toString(response.getEntity());
+	                System.out.println(responseBody);
+	            } finally {
+	                response.close();
+	            }
+	        } finally {
+	            //httpclient.close();
+	        }
+	        //ok we have it, now let's get the total count
+	        snowGroupPriority = returnXMLNodeValue(snowDataXMLNode,responseBody);
+	        
+	        //now let's get one that have exceeded SLA
+	        //let's get the tickets in this queue that are of high priority
+	       
+	        
+	        try {
+	        	HttpGet httpget = new HttpGet("https://" + snowDomain + "/api/now/stats/incident?sysparm_query=" + snowBaseQuery + "assignment_group%" + snowGroupGUID + "%5E" + snowSLAExceededQuery + "&sysparm_count=true&sysparm_avg_fields=priority&sysparm_group_by=assignment_group&sysparm_display_value=true");
+	        	httpget.setHeader("Accept", "application/xml");
+	            System.out.println("Executing request " + httpget.getRequestLine());
+	            CloseableHttpResponse snowXML = httpclient.execute(httpget);
+	            try {
+	                System.out.println("----------------------------------------");
+	                System.out.println(snowXML.getStatusLine());
+	                responseBody = EntityUtils.toString(snowXML.getEntity());
+	                System.out.println(responseBody);
+	            } finally {
+	            	snowXML.close();
+	            }
+	        } finally {
+	            httpclient.close();
+	        }
+	        
+	        snowGroupExceededSLA = returnXMLNodeValue(snowDataXMLNode,responseBody);
+	        
+	        if (s < 5) { 
+		    	System.out.println("Sorry! You didn't enter all the command line paramters that Service Now needs. Please modify and try again.");
+		    	snowPIXELString = "Sorry! You didn't enter all the command line paramters that Service Now needs. Please modify and try again.";
+			}
+	        
+	        snowPIXELString = snowGroupName + ": " + "Open=" + snowGroupOpen + " Priority=" + snowGroupPriority + " Overdue=" + snowGroupExceededSLA ;
+	        System.out.println(snowPIXELString);
+	        
+	      }
+
+	     
+	 private static String returnXMLNodeValue(String targetNode, String xmlString) {
+		 
+		  /* SNOW XML EXAMPLE
+	        <?xml version="1.0" encoding="UTF-8"?>
+	        <response>
+	        <result>
+	        <stats>
+	        	<count>20</count>
+	        	<avg><priority>2.5500</priority></avg>
+	        </stats>
+	        <groupby_fields>
+	        	<field>assignment_group</field>
+	        	<value>MSI SAP CRM</value>
+	        </groupby_fields>
+	        </result>
+	        </response>		    */
+		 
+		 String xmlValue = null;
+		 
+		 try {
+	            DocumentBuilderFactory dbf =
+	                DocumentBuilderFactory.newInstance();
+	            DocumentBuilder db = dbf.newDocumentBuilder();
+	            InputSource is = new InputSource();
+	            is.setCharacterStream(new StringReader(xmlString));
+
+	            Document doc = db.parse(is);
+	            NodeList nodes = doc.getElementsByTagName("stats");
+	          
+	            for (int i = 0; i < nodes.getLength(); i++) {
+	               Element element = (Element) nodes.item(i);
+
+	               NodeList name = element.getElementsByTagName(targetNode);
+	               Element line = (Element) name.item(0);
+	               System.out.println("Count: " + getCharacterDataFromElement(line));
+	               xmlValue = getCharacterDataFromElement(line);
+	            }
+	        }
+	        catch (Exception e) {
+	            e.printStackTrace();
+	        }
+		 
+		 return xmlValue;
+	 }
+	 
+	 private static String getCharacterDataFromElement(Element e) {
+		    Node child = e.getFirstChild();
+		    if (child instanceof CharacterData) {
+		       CharacterData cd = (CharacterData) child;
+		       return cd.getData();
+		    }
+		    return "?";
+		  } 
+
+
+
+private static void CheckandRunMode() {
 			
 		 
 		 
@@ -2189,6 +2512,49 @@ public class PIXELConsole extends IOIOConsoleApp {
 					
 					try {
 							runQuickBase();
+						} catch (MalformedURLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				}
+		 
+				else if(snowMode == true) {
+				
+						//TO DO right now this is hard coded to show two service now queue's / groups, would be better to make this dynamic depending on the number of queues entered in the command line arguments
+						
+						try {
+									try {
+										runSNOW(snowGroup1Name, snowGroup1GUID);
+									} catch (ParserConfigurationException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									} catch (SAXException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+									
+									String snowPIXELString1 = snowPIXELString;
+									
+									try {
+										runSNOW(snowGroup2Name, snowGroup2GUID);
+									} catch (ParserConfigurationException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									} catch (SAXException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+									
+									String snowPIXELString2 = snowPIXELString;
+									snowPIXELString = snowPIXELString1 + " " + snowPIXELString2;
+									System.out.println(snowPIXELString);
+									
+									scrollText(snowPIXELString, scrollingTextColor_, snowRefreshInterval,false); //will refresh by default after 25 scrolls, false means keep going forever
+							        
+							
 						} catch (MalformedURLException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -2542,7 +2908,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 					proxValue = prox_.read();
 	  	  			proxValue = proxValue * 1000;	
 	  	  			int proxInt = (int)proxValue;
-	  	  			System.out.println("Prox Sensor Value: " + proxInt + " " + ProxTriggerDone);
+	  	  			if (debug_) System.out.println("Prox Sensor Value: " + proxInt + " " + ProxTriggerDone); //we normally don't want to show this as it will clutter up the console when you are SSH'ing into your Pi
 	  	  			
 		  	  	///******** we will interrupt any scrolling text with a stock readout if that is turned on 
 	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && complimentsMode == true) {
@@ -2556,8 +2922,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 	  	  			}
 	  	  			//**********************************************************************************
 	  	  		
-	  	  		    
-	  	  			
 	  	  			
 	  	  			///******** we will interrupt any scrolling text with a stock readout if that is turned on 
 	  	  			if (proxInt > TriggerUpperThreshold_ && ProxTriggerDone == true && stockMode == true) {
