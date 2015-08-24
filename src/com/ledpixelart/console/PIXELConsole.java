@@ -372,11 +372,15 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static String stockPrice = null;
     
+    private static String stockPriceLast = "connection issue";
+    
     private static String stockChangeString = null;
     
     private static Boolean stockMode = false;
     
     private static BigDecimal stockChange;
+    
+    private static String stockChangeLast = " ";
     
     private static String complimentString = null;
     
@@ -1810,9 +1814,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static String getStock(String symbol) throws java.io.IOException {
 		//Yahoo API here http://financequotes-api.com
 		
-		
-	
-		
 		Stock stock = YahooFinance.get(symbol);
 		 
 		BigDecimal price = stock.getQuote().getPrice();
@@ -1822,8 +1823,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 		System.out.println(symbol + " Stock Price: " + price);
 		System.out.println(symbol + " Stock Price Change: " + stockChange.toString() +"%");
-		
-		
 		
 		if (price.toString() == null) {
 			return "Connectivity Problem";
@@ -2933,6 +2932,11 @@ private static void CheckandRunMode() {
 	  	  				try {
 							stockPrice = getStock(stockSymbols);
 							
+							//show these values in the event the Yahoo API isn't returning results, ie 503 error
+							stockPriceLast = stockPrice;
+							stockChangeLast = stockChange.toString();
+							//***************
+							
 							String StockScrollColor = "green"; //what color for the scrolling stock ticket
 		  	  				if (stockChange.signum() > 0) {
 		  	  					 StockScrollColor = "green";
@@ -2944,12 +2948,15 @@ private static void CheckandRunMode() {
 		  	  				x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
 		  	  				loopCounter = 0;
 		  	  				scrollText(stockSymbols + ": " + stockPrice + " Change " + stockChange.toString() + "%", StockScrollColor, 1,false);
-						} catch (IOException e) {
-							scrollText("Could not get stock, pls check Internet connection", "red", 1,false);
+						
+	  	  				} catch (IOException e) {
+	  	  					x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
+	  	  					loopCounter = 0;
+	  	  					scrollText(stockSymbols + ": " + stockPriceLast + " Change " + stockChangeLast + "%", "purple", 1,false); //purple means visually it's not the latest due to Yahoo API 503 error or some other problem
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 							ProxTriggerDone = true;
-							loopCounter = 0;
+							//loopCounter = 0;
 						}
 	  	  				
 	  	  				
