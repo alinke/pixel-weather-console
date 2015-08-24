@@ -1809,6 +1809,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	 
 	private static String getStock(String symbol) throws java.io.IOException {
 		//Yahoo API here http://financequotes-api.com
+		
+		
+	
+		
 		Stock stock = YahooFinance.get(symbol);
 		 
 		BigDecimal price = stock.getQuote().getPrice();
@@ -1819,8 +1823,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		System.out.println(symbol + " Stock Price: " + price);
 		System.out.println(symbol + " Stock Price Change: " + stockChange.toString() +"%");
 		
-		/*stockPrice = price.toString();
-		return stockPrice;*/
+		
 		
 		if (price.toString() == null) {
 			return "Connectivity Problem";
