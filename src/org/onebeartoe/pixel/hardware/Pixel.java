@@ -415,6 +415,12 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                     break;
 	            case 32: frame_length = 2048;
 	                     break;
+	            case 6416: frame_length = 2048;
+        				 break;
+	            case 12816: frame_length = 4096;
+				 		 break;
+	            case 25616: frame_length = 8192;
+		 		         break;
 	            case 64: frame_length = 4096;
 	                     break;
 	            case 128: frame_length = 8192;
@@ -503,7 +509,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	public void decodeGIF(String currentDir, String gifName, int currentResolution, int pixelMatrix_width, int pixelMatrix_height) {  //pass the matrix type
 		
 		//we're going to decode a native GIF into our RGB565 format
-	    //we'll need to know the resolution of the currently selected matrix type: 16x32, 32x32, 32x64, or 64x64
+	    //we'll need to know the resolution of the currently selected matrix type: 16x32, 32x32, 32x64, 64x64, 64x16, 128x16, 256x16
 		//and then we will receive the gif accordingly as we decode
 		//we also need to get the original width and height of the gif which is easily done from the gif decoder class
 		gifName = FilenameUtils.removeExtension(gifName); //with no extension
@@ -540,10 +546,6 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	             BufferedImage rotatedFrame = d.getFrame(i);  
 	            // rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.CW_90, null); //fixed bug, no longer need to rotate the image
 	            // rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.FLIP_HORZ, null); //fixed bug, no longer need to flip the image
-	             
-	             // These worked too but using the scalr library gives quicker results
-	             //rotatedFrame = getFlippedImage(rotatedFrame); //quick hack, for some reason the code below i think is flipping the image so we have to flip it here as a hack
-	             //rotatedFrame = rotate90ToLeft(rotatedFrame);  //quick hack, same as above, have to rotate
 	              
 	    		 if (frameWidth != pixelMatrix_width || frameHeight != pixelMatrix_height) {
 	    			 System.out.println("Resizing and encoding " + gifNamePath + " frame " + i);
@@ -573,10 +575,12 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                int y=0;
 	                int len = BitmapBytes.length;
 
-	                for (x=0 ; x < pixelMatrix_width; x++) {
-	                    for (y=0; y < pixelMatrix_height; y++) {
+	          	                
+            	  for (x=0 ; x < pixelMatrix_height; x++) {  //had a bug here causing a crash on decoding gifs, x and y were switched! this is the correct way
+                    for (y=0; y < pixelMatrix_width; y++) {
 
-	                        Color c = new Color(sendImg.getRGB(y, x));  // x and y were switched in the original code which was causing the image to rotate by 90 degrees and was flipped horizontally, switching x and y fixes this bug
+	                        //Color c = new Color(sendImg.getRGB(x, y));  // x and y were switched in the original code which was causing the image to rotate by 90 degrees and was flipped horizontally, switching x and y fixes this bug
+	                        Color c = new Color(sendImg.getRGB(y, x)); 
 	                        int red = c.getRed();
 	                        int green = c.getGreen();
 	                        int blue = c.getBlue();
@@ -600,8 +604,9 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	                        byte byteL=(byte)(pixel_to_send & 0x0FF);
 
 	                        //Writing it to array - High-byte is the first, big endian byte order
-	                        BitmapBytes[numByte]=byteL;
+
 	                        BitmapBytes[numByte+1]=byteH;
+	                        BitmapBytes[numByte]=byteL;
 	                        
 	                        numByte+=2;
 	                    }
@@ -678,80 +683,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	        new BufferedImage(width, height, image.getType()));
 	}
   
-  /*public static BufferedImage getFlippedImage(BufferedImage bi) { //we're not using
-      BufferedImage flipped = new BufferedImage(
-              bi.getWidth(),
-              bi.getHeight(),
-              bi.getType());
-      AffineTransform tran = AffineTransform.getTranslateInstance(bi.getWidth(), 0);
-      AffineTransform flip = AffineTransform.getScaleInstance(-1d, 1d);
-      tran.concatenate(flip);
 
-      Graphics2D g = flipped.createGraphics();
-      g.setTransform(tran);
-      g.drawImage(bi, 0, 0, null);
-      g.dispose();
-
-      return flipped;
-  }
-  
-  
-  private BufferedImage rotate90ToLeft( BufferedImage inputImage ){  //we're not using
-		//The most of code is same as before
-			int width = inputImage.getWidth();
-			int height = inputImage.getHeight();
-			BufferedImage returnImage = new BufferedImage( height, width , inputImage.getType()  );
-		//We have to change the width and height because when you rotate the image by 90 degree, the
-		//width is height and height is width <img src='http://forum.codecall.net/public/style_emoticons/<#EMO_DIR#>/smile.png' class='bbc_emoticon' alt=':)' />
-
-			for( int x = 0; x < width; x++ ) {
-				for( int y = 0; y < height; y++ ) {
-					returnImage.setRGB(y, width - x - 1, inputImage.getRGB(x, y));
-		//Again check the Picture for better understanding
-				}
-			}
-			return returnImage;
-		}
-  
-  private BufferedImage rotate90ToRight( BufferedImage inputImage ){
-		int width = inputImage.getWidth();
-		int height = inputImage.getHeight();
-		BufferedImage returnImage = new BufferedImage( height, width , inputImage.getType()  );
-
-		for( int x = 0; x < width; x++ ) {
-			for( int y = 0; y < height; y++ ) {
-				returnImage.setRGB( height - y - 1, x, inputImage.getRGB( x, y  )  );
-	//Again check the Picture for better understanding
-			}
-		}
-		return returnImage;
-	}
-  
-  public BufferedImage rotate180( BufferedImage inputImage ) {
-	//We use BufferedImage because it’s provide methods for pixel manipulation
-		int width = inputImage.getWidth(); //the Width of the original image
-		int height = inputImage.getHeight();//the Height of the original image
-
-		BufferedImage returnImage = new BufferedImage( width, height, inputImage.getType()  );
-	//we created new BufferedImage, which we will return in the end of the program
-	//it set up it to the same width and height as in original image
-	// inputImage.getType() return the type of image ( if it is in RBG, ARGB, etc. )
-
-		for( int x = 0; x < width; x++ ) {
-			for( int y = 0; y < height; y++ ) {
-				returnImage.setRGB( width - x - 1, height - y - 1, inputImage.getRGB( x, y  )  );
-			}
-		}
-	//so we used two loops for getting information from the whole inputImage
-	//then we use method setRGB by whitch we sort the pixel of the return image
-	//the first two parametres is the X and Y location of the pixel in returnImage and the last one is the //source pixel on the inputImage
-	//why we put width – x – 1 and height –y – 1 is hard to explain for me, but when you rotate image by //180degree the pixel with location [0, 0] will be in [ width, height ]. The -1 is for not to go out of
-	//Array size ( remember you always start from 0 so the last index is lower by 1 in the width or height
-	//I enclose Picture for better imagination  ... hope it help you
-		return returnImage;
-	//and the last return the rotated image
-
-	}*/
   
   public static AnalogInput getAnalogInput1() 
   {
