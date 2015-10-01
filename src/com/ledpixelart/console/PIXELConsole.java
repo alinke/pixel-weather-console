@@ -372,7 +372,7 @@ public class PIXELConsole extends IOIOConsoleApp {
     
     private static String stockPrice = null;
     
-    private static String stockPriceLast = "connection issue";
+    private static String stockPriceLast = "connection error";
     
     private static String stockChangeString = null;
     
@@ -392,7 +392,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	}
   	
   	private static void printUsage() {
-		System.out.println("*** PIXEL: Console V2.6 ***");
+		System.out.println("*** PIXEL: Console V2.7 ***");
 		System.out.println();
 		System.out.println("Usage:");
 		System.out.println("pixelc <options>");
@@ -933,6 +933,16 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.out.println("64x16 LED matrix has been selected");
 			}
 			
+			if (arg.startsWith("--128x16")) {
+				ledMatrixType = 18;
+				System.out.println("128x16 LED matrix has been selected");
+			}
+			
+			if (arg.startsWith("--256x16")) {
+				ledMatrixType = 19;
+				System.out.println("256x16 LED matrix has been selected");
+			}
+			
 			if (arg.startsWith("--superpixel")) {
 				ledMatrixType = 10;
 				System.out.println("SUPER PIXEL selected");
@@ -1256,7 +1266,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 		if (pixel.GIFNeedsDecoding(currentDir, gifFileName_, currentResolution) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
 			System.out.println("Decoding " + gifFileName_);
+			System.out.println("width " + KIND.width);
+			System.out.println("height " + KIND.height);
 			pixel.decodeGIF(currentDir, gifFileName_, currentResolution,KIND.width,KIND.height);
+			
 			
 		}
 		else {
@@ -1800,7 +1813,17 @@ public class PIXELConsole extends IOIOConsoleApp {
             	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_64x16;
                 frame_length = 2048;
                 currentResolution = 6416; 
-                break;	 	 
+                break;	
+            case 18:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_128x16;
+                frame_length = 4096;
+                currentResolution = 12816; 
+                break;	 	
+            case 19:
+            	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_256x16;
+                frame_length = 8192;
+                currentResolution = 25616; 
+                break;	 	
 		    	 
 		     default:	    		 
 		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32; //v2 as the default
@@ -2385,9 +2408,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 	        }
 	        //ok we have it, now let's get the total count
 	        snowGroupPriority = returnXMLNodeValue(snowDataXMLNode,responseBody);
-	        
+	         
 	        //now let's get one that have exceeded SLA
 	        //let's get the tickets in this queue that are of high priority
+	        
+	        
+	       // 3Da989bb76bc4a0a00ca4660bb42901469  pdc Q
 	       
 	        
 	        try {
@@ -2952,10 +2978,12 @@ private static void CheckandRunMode() {
 	  	  				} catch (IOException e) {
 	  	  					x = KIND.width * 2; //because we are interrupting an existing scrolling message, we have to reset the x position
 	  	  					loopCounter = 0;
-	  	  					scrollText(stockSymbols + ": " + stockPriceLast + " Change " + stockChangeLast + "%", "purple", 1,false); //purple means visually it's not the latest due to Yahoo API 503 error or some other problem
-							// TODO Auto-generated catch block
+	  	  					//if (stockPriceLast.equals("connection issue")) stockPriceLast = "15.94"; //added this for ET demo because Yahoo Stock API was returning 503 due to stock market crash in August 2015
+	  	  					//scrollText(stockSymbols + ": " + stockPriceLast + " Change " + stockChangeLast + "%", "orange", 1,false); //purple means visually it's not the latest due to Yahoo API 503 error or some other problem
+	  	  				    scrollText(stockSymbols + ": " + stockPriceLast, "orange", 1,false); //purple means visually it's not the latest due to Yahoo API 503 error or some other problem
+	  	  					// TODO Auto-generated catch block
 							e.printStackTrace();
-							ProxTriggerDone = true;
+							//ProxTriggerDone = true;
 							//loopCounter = 0;
 						}
 	  	  				
