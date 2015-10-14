@@ -59,7 +59,8 @@ public class DirectoryFileComparator extends AbstractFileComparator implements S
      * @return the result of calling file1's
      * {@link File#compareTo(File)} with file2 as the parameter.
      */
-    public int compare(File file1, File file2) {
+    @Override
+	public int compare(File file1, File file2) {
         return getType(file1) - getType(file2);
     }
 

@@ -64,7 +64,8 @@ public class LastModifiedFileComparator extends AbstractFileComparator implement
      * is greater than the second file.
      * 
      */
-    public int compare(File file1, File file2) {
+    @Override
+	public int compare(File file1, File file2) {
         long result = file1.lastModified() - file2.lastModified();
         if (result < 0) {
             return -1;

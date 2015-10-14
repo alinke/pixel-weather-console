@@ -105,7 +105,8 @@ public class SizeFileComparator extends AbstractFileComparator implements Serial
      * is greater than the second file.
      * 
      */
-    public int compare(File file1, File file2) {
+    @Override
+	public int compare(File file1, File file2) {
         long size1 = 0;
         if (file1.isDirectory()) {
             size1 = sumDirectoryContents && file1.exists() ? FileUtils.sizeOfDirectory(file1) : 0;

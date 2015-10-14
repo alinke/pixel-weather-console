@@ -83,28 +83,32 @@ public class OrFileFilter
     /**
      * {@inheritDoc}
      */
-    public void addFileFilter(final IOFileFilter ioFileFilter) {
+    @Override
+	public void addFileFilter(final IOFileFilter ioFileFilter) {
         this.fileFilters.add(ioFileFilter);
     }
 
     /**
      * {@inheritDoc}
      */
-    public List<IOFileFilter> getFileFilters() {
+    @Override
+	public List<IOFileFilter> getFileFilters() {
         return Collections.unmodifiableList(this.fileFilters);
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean removeFileFilter(IOFileFilter ioFileFilter) {
+    @Override
+	public boolean removeFileFilter(IOFileFilter ioFileFilter) {
         return this.fileFilters.remove(ioFileFilter);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void setFileFilters(final List<IOFileFilter> fileFilters) {
+    @Override
+	public void setFileFilters(final List<IOFileFilter> fileFilters) {
         this.fileFilters.clear();
         this.fileFilters.addAll(fileFilters);
     }

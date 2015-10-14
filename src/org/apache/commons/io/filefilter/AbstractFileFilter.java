@@ -36,7 +36,8 @@ public abstract class AbstractFileFilter implements IOFileFilter {
      * @param file  the File to check
      * @return true if this file matches the test
      */
-    public boolean accept(File file) {
+    @Override
+	public boolean accept(File file) {
         return accept(file.getParentFile(), file.getName());
     }
 
@@ -47,7 +48,8 @@ public abstract class AbstractFileFilter implements IOFileFilter {
      * @param name  the filename within the directory to check
      * @return true if this file matches the test
      */
-    public boolean accept(File dir, String name) {
+    @Override
+	public boolean accept(File dir, String name) {
         return accept(new File(dir, name));
     }
 

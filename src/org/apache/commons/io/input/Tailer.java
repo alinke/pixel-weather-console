@@ -333,7 +333,8 @@ public class Tailer implements Runnable {
     /**
      * Follows changes in the file, calling the TailerListener's handle method for each new line.
      */
-    public void run() {
+    @Override
+	public void run() {
         RandomAccessFile reader = null;
         try {
             long last = 0; // The last time the file was checked for changes

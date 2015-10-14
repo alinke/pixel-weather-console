@@ -51,7 +51,8 @@ class ReverseComparator extends AbstractFileComparator implements Serializable {
      * @return the result from the delegate {@link Comparator#compare(Object, Object)}
      * reversing the value (i.e. positive becomes negative and vice versa)
      */
-    public int compare(File file1, File file2) {
+    @Override
+	public int compare(File file1, File file2) {
         return delegate.compare(file2, file1); // parameters switched round
     }
 

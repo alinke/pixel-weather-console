@@ -99,7 +99,8 @@ public class PathFileComparator extends AbstractFileComparator implements Serial
      * is greater than the second file.
      * 
      */
-    public int compare(File file1, File file2) {
+    @Override
+	public int compare(File file1, File file2) {
         return caseSensitivity.checkCompareTo(file1.getPath(), file2.getPath());
     }
 

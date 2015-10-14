@@ -84,11 +84,8 @@ public class Pixel
     {
 	
 	   this.KIND = KIND;
-		
 		BitmapBytes = new byte[KIND.width * KIND.height * 2]; //512 * 2 = 1024 or 1024 * 2 = 2048
-		
 		frame_ = new short[KIND.width * KIND.height];
-	
     }
     
         private static AnalogInput getAnalogInput(int pinNumber) 

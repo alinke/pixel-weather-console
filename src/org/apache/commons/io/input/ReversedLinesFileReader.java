@@ -177,7 +177,8 @@ public class ReversedLinesFileReader implements Closeable {
      *
      * @throws IOException  if an I/O error occurs
      */
-    public void close() throws IOException {
+    @Override
+	public void close() throws IOException {
         randomAccessFile.close();
     }
 

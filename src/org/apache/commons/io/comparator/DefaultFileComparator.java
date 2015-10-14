@@ -60,7 +60,8 @@ public class DefaultFileComparator extends AbstractFileComparator implements Ser
      * @return the result of calling file1's
      * {@link File#compareTo(File)} with file2 as the parameter.
      */
-    public int compare(File file1, File file2) {
+    @Override
+	public int compare(File file1, File file2) {
         return file1.compareTo(file2);
     }
 }

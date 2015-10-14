@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/commons-codec-1.10.jar"/>
 	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/commons-logging-1.2.jar"/>
 	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/YahooFinanceAPI-2.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/alinke63257/Documents/GitHub/pixel-weather-console/jar/imgscalr-lib-4.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
