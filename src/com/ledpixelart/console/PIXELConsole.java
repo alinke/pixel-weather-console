@@ -94,7 +94,8 @@ public class PIXELConsole extends IOIOConsoleApp {
     Print_Usage usage = new Print_Usage();
      static Scroll_Text scroll = new Scroll_Text();
      static Snow snow = new Snow();
-    	 static Weather weather = new Weather();
+    	 //static Weather weather = new Weather();
+    	 static Weather_Wunderground weather = new Weather_Wunderground();
     	  static QuickBase base= new QuickBase();
     	  static YahooStock yahooStock= new YahooStock();
     	  static RunCompliment compliment = new RunCompliment();
@@ -131,10 +132,14 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static Command command_;
 	protected static String zip_ = "";
 	private static String gifFileName_ = "";
-	protected static String woeid_ = "";
-	protected static int zipInt_;
+	protected static String zmw_ = "";
+	protected static String woeid_ = ""; // no longer used, this was for the yahoo api
 	protected static int woeidInt_;
+	protected static int zipInt_;
+	protected static int zmwInt_;
 	protected static boolean zipMode;
+	protected static String apikey_;
+	protected static boolean userAPIKey;
 	protected static boolean reportTomorrowWeather = false;
 	private static boolean validCommandLine = false;
 	private static boolean writeMode = false;
@@ -370,7 +375,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--forecast")) {
 				reportTomorrowWeather = true;
-				System.out.println("Displaying the current weather conditions, use --forecast if you want tomorrow's forecast.\n");
+				System.out.println("Displaying tomorrow's forecast, omit if you want today's weather\n");
 			}
 			
 			if (arg.startsWith("--gifp=")) { //not using this one
@@ -628,14 +633,21 @@ public class PIXELConsole extends IOIOConsoleApp {
 				zipMode = true;
 				weatherMode = true;
 				z++;
-			} else if (arg.startsWith("--woeid")) {
-				woeid_ = arg.substring(0,7);
-				System.out.println("woeid: " + woeid_);
+			} else if (arg.startsWith("--zmw")) {
+				//zmw_ = arg.substring(0,7);
+				zmw_ = arg.substring(6);
+				System.out.println("zmw: " + zmw_);
 				validCommandLine = true;
 				zipMode = false;
 				weatherMode = true;
 				z++;
 			}
+			
+			if (arg.startsWith("--apikey=")) {
+				apikey_ = arg.substring(9);
+				System.out.println("Wunderground Api key: " + apikey_);
+				userAPIKey = true;
+			}	
 			
 			if (arg.startsWith("--daemon")) { //not using this one
 				System.out.println("Daemon Mode");
@@ -1187,8 +1199,13 @@ static void CheckandRunMode() {
 				}
 				
 				else if (weatherMode == true){
-					weather.getWeather();
-					weather.runWeatherAnimations();
+					//weather.getWeather();
+					//weather.runWeatherAnimations();
+					
+					Weather_Wunderground.getWeather();
+					Weather_Wunderground.runWeatherAnimations();
+					
+					
 				}
 				
 				else if (scrollingTextMode == true) {
