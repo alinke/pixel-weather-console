@@ -4,7 +4,7 @@ public class Print_Usage {
 
 	public void printUsage(){
 
-	System.out.println("*** PIXEL: Console V2.7 *** \n"
+	System.out.println("*** PIXEL: Console V3.0 *** \n"
 			+ "Usage:"
 			+ "pixelc <options>"
 			+"Valid options are:\nGIF MODE\n"
@@ -73,14 +73,14 @@ public class Print_Usage {
 				+"\nWEATHER MODE"
 				+"\n"
 				+"\n--zip=your_united_states_zip_code Non-US users must use zmw"
-				+"\n--zmw=your_city_zmw_coordinates Coordinates that the Wunderground Weather API uses\n to designate your location, find your zmw coordinates here http://api.wunderground.com/api/9af894a415d42861/conditions/geolookup/q/holland/Maastricht.json and substitute holland and Maastricht with your country and city , you would use 00000.1.06380 as an example for Maastricht"
+				+"\n--zmw=your city id A unique city ID that the Open Weather Map API uses\n to designate your location, find your city ID from here http://bulk.openweathermap.org/sample/"
 				+"\n--loop=number  How many times to loop the weather GIF before exiting, omit this parameter to loop indefinitely"
 				+"\n--forecast Displays tomorrow's weather conditions, defaults \nto current weather conditions if not specified"
-				+"\n--apikey=your_wunderground_api_key Get this key by registering a developer account at https://www.wunderground.com/weather/api/"
+				+"\n--apikey=your_openweathermap_api_key Get this key by registering a free developer account at https://openweathermap.org/api"
 				+"\nEx. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050 --loop=10 --apikey=your_key"
 				+"\nEx. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --zip=95050 --write --apikey=your_key"
-				+"\nEx. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1411 pixelc.jar --zmw=00000.5.06343 --forecast --adafruit32x32 --apikey=your_key"
-				+"\nEx. java -jar pixelc.jar --zmw=00000.5.06343 --forecast --adafruit32x32 --apikey=your_key Ex. Raspberry Pi example for a Pixel 2.5 board with a Adafruit 32x32 LED matrix"
+				+"\nEx. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1411 pixelc.jar --zmw=2988506 --forecast --adafruit32x32 --apikey=your_key"
+				+"\nEx. java -jar pixelc.jar --zmw=2988506 --forecast --adafruit32x32 --apikey=your_key Ex. Raspberry Pi example for a Pixel 2.5 board with a Adafruit 32x32 LED matrix"
 				+"\n"
 				+"\nOmitting -Dioio.SerialPorts=<Port of PIXEL> may still work\n" 
 				+"\nbut will take longer for your computer to scan all ports to find PIXEL"

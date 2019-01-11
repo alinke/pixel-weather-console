@@ -9,6 +9,7 @@ import ioio.lib.util.BaseIOIOLooper;
 import ioio.lib.util.IOIOConnectionManager.Thread;
 import ioio.lib.util.IOIOLooper;
 import ioio.lib.util.pc.IOIOConsoleApp;
+import net.aksingh.owmjapis.api.APIException;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -59,6 +60,7 @@ import org.xml.sax.SAXException;
 
 import org.w3c.dom.CharacterData;
 
+import twitter4j.JSONException;
 //import twitter4j.JSONArray;
 //import twitter4j.JSONException;
 //import twitter4j.JSONObject;
@@ -102,7 +104,8 @@ public class PIXELConsole extends IOIOConsoleApp {
      
     private boolean ledOn_ = false;
 	private static IOIO ioiO; 	 
-	protected static RgbLedMatrix.Matrix KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32;
+	//protected static RgbLedMatrix.Matrix KIND = ioio.lib.api.RgbLedMatrix.Matrix.SEEEDSTUDIO_32x32;
+	protected static RgbLedMatrix.Matrix KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x32;
 	private static int weatherCode;
 	private static String weatherCondition;
 	public static final Pixel pixel = new Pixel(KIND);
@@ -175,7 +178,8 @@ public class PIXELConsole extends IOIOConsoleApp {
     private static int matrix_model;
     private static int frame_length;
     private static int currentResolution;
-    private static int ledMatrixType = 3; //we'll default to PIXEL 32x32 and change this is a command line option is entered specifying otherwise
+    //private static int ledMatrixType = 3; //we'll default to PIXEL 32x32 and change this is a command line option is entered specifying otherwise
+    private static int ledMatrixType = 11;
     static int x;
     static int scrollingTextDelay_ = 6;
     protected static int scrollingSmoothness_ = 100; //put a smaller number like 10 for smoother scrolling but you'll need a USB connection for smooth, bluetooth there will be some delay
@@ -1199,13 +1203,26 @@ static void CheckandRunMode() {
 				}
 				
 				else if (weatherMode == true){
+					//old Yahoo Weather API
 					//weather.getWeather();
 					//weather.runWeatherAnimations();
 					
-					Weather_Wunderground.getWeather();
-					Weather_Wunderground.runWeatherAnimations();
+					//old Wunderground Weather API
+					//Weather_Wunderground.getWeather();
+					//Weather_Wunderground.runWeatherAnimations();
 					
-					
+				   //updated now with the Open Weather Map API
+						
+					try {
+						Weather_openweathermap.getWeather();
+						Weather_openweathermap.runWeatherAnimations();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 				
 				else if (scrollingTextMode == true) {
