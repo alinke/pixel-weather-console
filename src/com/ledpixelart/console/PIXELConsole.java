@@ -9,7 +9,6 @@ import ioio.lib.util.BaseIOIOLooper;
 import ioio.lib.util.IOIOConnectionManager.Thread;
 import ioio.lib.util.IOIOLooper;
 import ioio.lib.util.pc.IOIOConsoleApp;
-import net.aksingh.owmjapis.api.APIException;
 
 import java.awt.Color;
 import java.awt.Font;

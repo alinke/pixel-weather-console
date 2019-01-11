@@ -13,7 +13,5 @@
 	<classpathentry kind="lib" path="/Users/al/Documents/code/pixel-weather-console/jar/json-simple-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/Users/al/Documents/code/pixel-weather-console/jar/twitter4j-core-4.0.2.jar"/>
 	<classpathentry kind="lib" path="/Users/al/Documents/code/pixel-weather-console/jar/YahooFinanceAPI-2.0.0.jar"/>
-	<classpathentry kind="lib" path="/Users/al/Documents/code/pixel-weather-console/jar/gson-2.8.5.jar"/>
-	<classpathentry kind="lib" path="/Users/al/Documents/code/pixel-weather-console/jar/owm-japis-2.5.2.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
