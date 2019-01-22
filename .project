@@ -3,7 +3,6 @@
 	<name>pixel-console</name>
 	<comment></comment>
 	<projects>
-		<project>IOIOLibPC</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
