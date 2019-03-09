@@ -292,6 +292,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	static String snowname="";
 	static String snowGUID="";
 	
+	private static String selectedLEDMatrix = "Adafruit 32x32";
+	
     private static enum Command
 		{
 			VERSIONS, FINGERPRINT, WRITE
@@ -601,32 +603,38 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--16x32")) {
 				ledMatrixType = 1;
-				System.out.println("16x32 LED matrix has been selected");
+				//System.out.println("16x32 LED matrix has been selected");
+				selectedLEDMatrix = "32x16";
 			}
 			
 			if (arg.startsWith("--adafruit32x32")) {
 				ledMatrixType = 11;
-				System.out.println("Adafruit 32x32 LED matrix has been selected");
+				//System.out.println("Adafruit 32x32 LED matrix has been selected");
+				selectedLEDMatrix = "Adafruit 32x32";
 			}
 			
 			if (arg.startsWith("--64x16")) {
 				ledMatrixType = 17;
-				System.out.println("64x16 LED matrix has been selected");
+				//System.out.println("64x16 LED matrix has been selected");
+				selectedLEDMatrix = "64x16";
 			}
 			
 			if (arg.startsWith("--superpixel")) {
 				ledMatrixType = 10;
-				System.out.println("SUPER PIXEL selected");
+				//System.out.println("SUPER PIXEL selected");
+				selectedLEDMatrix = "Old SUPER PIXEL 64x64";
 			}
 			
 			if (arg.startsWith("--adafruit64x64")) {
 				ledMatrixType = 14;
-				System.out.println("Adafruit 64x64 selected");
+				//System.out.println("Adafruit 64x64 selected");
+				selectedLEDMatrix = "Adafruit 64x64";
 			}
 			
 			if (arg.startsWith("--adafruit64x32")) {
 				ledMatrixType = 13;
-				System.out.println("Adafruit 64x32 selected");
+				//System.out.println("Adafruit 64x32 selected");
+				selectedLEDMatrix = "Adafruit 64x32";
 			}
 			
 			if (arg.startsWith("--zip=")) {
@@ -839,7 +847,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		}
 		
 	protected void run(String[] args) throws IOException {		
-		System.out.println("Pixel integration with delayted run() via sleep.");
+		//System.out.println("Pixel integration with delayted run() via sleep.");
 		if (backgroundMode) {
 			while(stayConnected)
 				            {
@@ -903,8 +911,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	 setGIFfps(pixel.getDecodedfps(currentDir, gifFileName_)); //get the fps
 	    }
 	    
-	    System.out.println(gifFileName_ + " contains " + getGIFnumFrames() + " total frames, a " + getGIFselectedFileDelay() + "ms frame delay or " + getGIFfps() + " frames per second and a resolution of " + getGIFresolution());
-		
+	    System.out.println(gifFileName_ + " contains " + getGIFnumFrames() + " frames with a " + getGIFselectedFileDelay() + "ms frame delay");
+	    System.out.println("Selected LED Matrix: " + selectedLEDMatrix);
 		//****** Now let's setup the animation ******
 		    
 		   // animation_name = selectedFileName;
@@ -916,7 +924,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    					pixel.interactiveMode();
 	    					//send loading image
 	    					pixel.writeMode(getGIFfps()); //need to tell PIXEL the frames per second to use, how fast to play the animations
-	    					System.out.println("Now writing to PIXEL's SD card, the screen will go blank until writing has been completed..."); 
+	    					System.out.println("Writing to PIXEL's microSD card..."); 
 	    					  int y;
 	    				    	 
 	    				   	  //for (y=0;y<numFrames-1;y++) { //let's loop through and send frame to PIXEL with no delay
@@ -925,11 +933,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				 			//framestring = "animations/decoded/" + animation_name + ".rgb565";
 	    				 			//System.out.println("Writing to PIXEL: Frame " + y + "of " + GIFnumFrames + " Total Frames");
 
-	    			    			System.out.println("Writing " + gifFileName_ + " to PIXEL " + "frame " + y);
+	    			    			System.out.println("Writing frame " + y);
 	    				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, y, getGIFnumFrames(), getGIFresolution(), KIND.width,KIND.height);
 	    				   	  } //end for loop
 	    					pixel.playLocalMode(); //now tell PIXEL to play locally
-	    					System.out.println("Writing " + gifFileName_ + " to PIXEL complete, now displaying...");
+	    					System.out.println("Writing complete, now displaying...");
 	    					//System.exit(0);
 	    					exit(0,200);
 	    			}
@@ -1116,7 +1124,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		    	 currentResolution = 32;
 	     }
 		 
-		 System.out.println("CurrentResolution is: " + currentResolution + "\n");
+		 //System.out.println("CurrentResolution is: " + currentResolution + "\n");
 	 }
 	 
 	 static void exit (final int status, int maxDelayMillis) {
@@ -1124,7 +1132,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		 ActionListener exitTimer_ = new ActionListener() {
 				
              public void actionPerformed(ActionEvent actionEvent) {
-            	System.out.println("Preparing to exit...");
+            	System.out.println("Exiting...");
         		try {
             	 System.exit(status);
         		}
