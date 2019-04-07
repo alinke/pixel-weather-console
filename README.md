@@ -14,7 +14,7 @@ httpcore-4.3.2.jar - located in the jar folder
 Usage:
 java -jar pixelc.jar <options>
 
-Example project using a Raspberry Pi, PIXEL:Maker's Kit board, and a 64x32 LED Matrix https://www.instructables.com/id/Vertical-Bartop-Arcade-With-Integrated-PIXEL-LED-D/
+Example Bartop Arcade with LED marquee that changes to match the game project using a Raspberry Pi, PIXEL:Maker's Kit board, and a 64x32 LED Matrix https://www.instructables.com/id/Vertical-Bartop-Arcade-With-Integrated-PIXEL-LED-D/
 
 Example usage:  java -jar pixelc.jar --gif=0pacman.gif --adafruit64x32 --write
 
