@@ -428,6 +428,8 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
                 		break;
 	            case 128: frame_length = 8192;
                 		break;
+	            case 12832: frame_length = 8192;
+        			break;
 	            case 128999: frame_length = 8192; //had to add unique ones (999) for mirror to force re-encoding when led panel is switched
         				break;
 	            default: frame_length = 2048;

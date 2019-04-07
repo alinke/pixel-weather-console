@@ -612,12 +612,27 @@ public class PIXELConsole extends IOIOConsoleApp {
 				selectedLEDMatrix = "Adafruit 32x16";
 			}
 			
+			if (arg.startsWith("--32x16")) {
+				ledMatrixType = 1;
+				selectedLEDMatrix = "Adafruit 32x16";
+			}
+			
 			if (arg.startsWith("--adafruit32x32")) {
 				ledMatrixType = 11;
 				selectedLEDMatrix = "Adafruit 32x32";
 			}
 			
+			if (arg.startsWith("--32x32")) {
+				ledMatrixType = 11;
+				selectedLEDMatrix = "Adafruit 32x32";
+			}
+			
 			if (arg.startsWith("--adafruit32x32colorswap")) {
+				ledMatrixType = 12;
+				selectedLEDMatrix = "Adafruit 32x32 Color Swap";
+			}
+			
+			if (arg.startsWith("--32x32colorswap")) {
 				ledMatrixType = 12;
 				selectedLEDMatrix = "Adafruit 32x32 Color Swap";
 			}
@@ -647,13 +662,28 @@ public class PIXELConsole extends IOIOConsoleApp {
 				selectedLEDMatrix = "Adafruit 64x64";
 			}
 			
+			if (arg.startsWith("--64x64")) {
+				ledMatrixType = 14;
+				selectedLEDMatrix = "Adafruit 64x64";
+			}
+			
 			
 			if (arg.startsWith("--adafruit64x32")) {
 				ledMatrixType = 13;
 				selectedLEDMatrix = "Adafruit 64x32";
 			}
 			
+			if (arg.startsWith("--64x32")) {
+				ledMatrixType = 13;
+				selectedLEDMatrix = "Adafruit 64x32";
+			}
+			
 			if (arg.startsWith("--adafruit64x32m")) {
+				ledMatrixType = 18;
+				selectedLEDMatrix = "Adafruit 64x32 Mirrored";
+			}
+			
+			if (arg.startsWith("--64x32m")) {
 				ledMatrixType = 18;
 				selectedLEDMatrix = "Adafruit 64x32 Mirrored";
 			}
@@ -668,7 +698,17 @@ public class PIXELConsole extends IOIOConsoleApp {
 				selectedLEDMatrix = "Adafruit 256x16";
 			}
 			
+			if (arg.startsWith("--256x16")) {
+				ledMatrixType = 19;
+				selectedLEDMatrix = "Adafruit 256x16";
+			}
+			
 			if (arg.startsWith("--adafruit32x32m")) {
+				ledMatrixType = 20;
+				selectedLEDMatrix = "Adafruit 32x32 Mirrored";
+			}
+			
+			if (arg.startsWith("--32x32m")) {
 				ledMatrixType = 20;
 				selectedLEDMatrix = "Adafruit 32x32 Mirrored";
 			}
@@ -678,12 +718,37 @@ public class PIXELConsole extends IOIOConsoleApp {
 				selectedLEDMatrix = "Adafruit 32x32 4X Mirrored";
 			}
 			
+			if (arg.startsWith("--32x324m")) {
+				ledMatrixType = 21;
+				selectedLEDMatrix = "Adafruit 32x32 4X Mirrored";
+			}
+			
 			if (arg.startsWith("--adafruit128x16")) {
 				ledMatrixType = 22;
 				selectedLEDMatrix = "Adafruit 128x16";
 			}
 			
+			if (arg.startsWith("--128x16")) {
+				ledMatrixType = 22;
+				selectedLEDMatrix = "Adafruit 128x16";
+			}
+			
+			if (arg.startsWith("--adafruit128x32")) {
+				ledMatrixType = 15;
+				selectedLEDMatrix = "Adafruit 128x32";
+			}
+			
+			if (arg.startsWith("--128x32")) {
+				ledMatrixType = 15;
+				selectedLEDMatrix = "Adafruit 128x32";
+			}
+			
 			if (arg.startsWith("--adafruit64x32colorswap")) {
+				ledMatrixType = 24;
+				selectedLEDMatrix = "Adafruit 64x32 Color Swap";
+			}
+			
+			if (arg.startsWith("--64x32colorswap")) {
 				ledMatrixType = 24;
 				selectedLEDMatrix = "Adafruit 64x32 Color Swap";
 			}
@@ -693,7 +758,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 				selectedLEDMatrix = "Adafruit 64x64 Color Swap";
 			}
 			
-	
+			if (arg.startsWith("--64x64colorswap")) {
+				ledMatrixType = 25;
+				selectedLEDMatrix = "Adafruit 64x64 Color Swap";
+			}
 			
 			if (arg.startsWith("--zip=")) {
 				zip_ = arg.substring(6);
@@ -1163,7 +1231,7 @@ public class PIXELConsole extends IOIOConsoleApp {
              case 15:
             	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_128x32;
                 frame_length = 8192;
-                currentResolution = 128; 
+                currentResolution = 12832; 
                 break;	 	 	
             case 16:
             	KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x128;
