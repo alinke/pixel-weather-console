@@ -15,6 +15,7 @@ Usage:
 java -jar pixelc.jar <options>
 
 Example project using a Raspberry Pi, PIXEL:Maker's Kit board, and a 64x32 LED Matrix https://www.instructables.com/id/Vertical-Bartop-Arcade-With-Integrated-PIXEL-LED-D/
+
 Example usage:  java -jar pixelc.jar --gif=0pacman.gif --adafruit64x32 --write
 
 See http://ledpixelart.com/console/ for all the command line options
