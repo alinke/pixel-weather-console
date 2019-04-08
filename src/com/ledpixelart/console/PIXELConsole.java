@@ -637,11 +637,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 				selectedLEDMatrix = "Adafruit 32x32 Color Swap";
 			}
 			
-			if (arg.startsWith("--random32x32")) {
-				ledMatrixType = 23;
-				selectedLEDMatrix = "32x32 Random Pixel Order";
-			}
-			
 			if (arg.startsWith("--64x16")) {
 				ledMatrixType = 17;
 				selectedLEDMatrix = "64x16";
@@ -666,7 +661,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 				ledMatrixType = 14;
 				selectedLEDMatrix = "Adafruit 64x64";
 			}
-			
 			
 			if (arg.startsWith("--adafruit64x32")) {
 				ledMatrixType = 13;
@@ -761,6 +755,21 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--64x64colorswap")) {
 				ledMatrixType = 25;
 				selectedLEDMatrix = "Adafruit 64x64 Color Swap";
+			}
+			
+			if (arg.startsWith("--32x32misc1")) {
+				ledMatrixType = 23;
+				selectedLEDMatrix = "32x32 Random Pixel Order #1";
+			}
+			
+			if (arg.startsWith("--32x32misc2")) {
+				ledMatrixType = 2;
+				selectedLEDMatrix = "32x32 Random Pixel Order #2";
+			}
+			
+			if (arg.startsWith("--32x32misc3")) {
+				ledMatrixType = 3;
+				selectedLEDMatrix = "32x32 Random Pixel Order #3";
 			}
 			
 			if (arg.startsWith("--zip=")) {
