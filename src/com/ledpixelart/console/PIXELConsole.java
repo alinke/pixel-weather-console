@@ -134,6 +134,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static Command command_;
 	protected static String zip_ = "";
 	private static String gifFileName_ = "";
+	private static String gifFilePath_ = "";
 	protected static String zmw_ = "";
 	protected static String woeid_ = ""; // no longer used, this was for the yahoo api
 	protected static int woeidInt_;
@@ -292,6 +293,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 	static String snowname="";
 	static String snowGUID="";
 	
+	private static String pixelLaunchPath_ = "";
+	private static boolean pathSpecified_ = false;
+	
 	private static String selectedLEDMatrix = "Adafruit 32x32";
 	
     private static enum Command
@@ -324,12 +328,18 @@ public class PIXELConsole extends IOIOConsoleApp {
 
 	private static void parseOption(String arg) throws BadArgumentsException {
 			
-			if (arg.startsWith("--proximity"))
-			{
-				ProxSensor = true;
+			if (arg.startsWith("--path=")) {    //april 2019 , added this path because absolute path gifs were failing, so we need to pass to java the path where pixelc is
+				pixelLaunchPath_ = arg.substring(7);
 				validCommandLine = true;
-				System.out.println("Proximity Sensor enabled");
-			}
+				pathSpecified_ = true;
+			}	
+		
+			if (arg.startsWith("--proximity"))
+				{
+					ProxSensor = true;
+					validCommandLine = true;
+					System.out.println("Proximity Sensor enabled");
+				}
 			
 			if (arg.startsWith("--proximitypin="))
 			{  //we'll use pin34 by default unless the user overrides here
@@ -391,8 +401,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 				z++;
 			}	
 			
+			
 			if (arg.startsWith("--gif=")) {
 				gifFileName_ = arg.substring(6);
+				gifFilePath_ = gifFileName_;    //we need the full path if using absolute path because it might be /pixel/mame-libretto/pacman.gif
 				//System.out.println("GIF file name: " + gifFileName_);
 				gifModeExternal = true;
 				validCommandLine = true;
@@ -407,6 +419,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 				else {
 					
 					String jarPath = PIXELConsole.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+					
 					try {
 						String decodedPath = URLDecoder.decode(jarPath, "UTF-8");
 					} catch (UnsupportedEncodingException e) {
@@ -416,7 +429,13 @@ public class PIXELConsole extends IOIOConsoleApp {
 					
 					String jarDirpath = jarPath.substring(0,jarPath.lastIndexOf(File.separator));
 					
-					currentDir = jarDirpath;
+					if (pathSpecified_ == true) {
+						currentDir = pixelLaunchPath_;
+					}
+					else {
+						currentDir = jarDirpath;  //this doesn't work and just returns so if absolute url and not relative, need to specify the path
+					}
+					
 					System.out.println("Working Path is: " + currentDir);
 					
 					if (gifFileName_.contains("~")) { //~ shortcut for home directory
@@ -431,7 +450,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 						File GIFfileAbsolute = new File(gifFileName_);
 						if (GIFfileAbsolute.exists() && !GIFfileAbsolute.isDirectory()) { 
 							
-						
+							System.out.println("gif file path: " + gifFileName_);
+	                     
 							gifFileName_ = GIFfileAbsolute.getName();
 							
 							//the commented out code here did not work on the Raspberry Pi so changed to above
@@ -1026,8 +1046,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    {
 		
 		if (pixel.GIFNeedsDecoding(currentDir, gifFileName_, currentResolution) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
-			System.out.println("Decoding " + gifFileName_);
-			pixel.decodeGIF(currentDir, gifFileName_, currentResolution,KIND.width,KIND.height);
+			System.out.println("Decoding " + currentDir + gifFileName_);
+			pixel.decodeGIF(currentDir, gifFilePath_, gifFileName_, currentResolution,KIND.width,KIND.height);
 			
 		}
 		else {
@@ -1311,7 +1331,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		 ActionListener exitTimer_ = new ActionListener() {
 				
              public void actionPerformed(ActionEvent actionEvent) {
-            	System.out.println("Exiting...");
+            	//System.out.println("Exiting...");
         		try {
             	 System.exit(status);
         		}
@@ -1410,6 +1430,7 @@ static void CheckandRunMode() {
 						e.printStackTrace();
 					}
 				}
+		
 				
 				else if (scrollingTextMode == true) {
 					

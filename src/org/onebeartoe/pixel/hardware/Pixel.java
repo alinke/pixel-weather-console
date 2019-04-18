@@ -272,6 +272,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
     	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
     	//String gifNamePath = gifName + ".txt";
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+    	System.out.println("Decoded Path: " + gifNamePath);
     	File filemeta = new File(gifNamePath);    	
     	FileInputStream decodedFile = null; //fix this
     	try {
@@ -307,6 +308,7 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	    gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	    //String framestring = "animations/decoded/" + animation_name + ".rgb565";
 	   // String gifNamePath = gifName + ".txt";
+	    System.out.println("Decoded Path: " + currentDir + "/decoded/" + gifName + ".txt");
 	    String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
     	File filemeta = new File(gifNamePath);
     	
@@ -513,18 +515,20 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 			}
 	}
     
-	public void decodeGIF(String currentDir, String gifName, int currentResolution, int pixelMatrix_width, int pixelMatrix_height) {  //pass the matrix type
+	public void decodeGIF(String currentDir, String gifFilePath, String gifName, int currentResolution, int pixelMatrix_width, int pixelMatrix_height) {  //pass the matrix type
 		
 		//we're going to decode a native GIF into our RGB565 format
 	    //we'll need to know the resolution of the currently selected matrix type: 16x32, 32x32, 32x64, 64x64, 64x16, 128x16, 256x16
 		//and then we will receive the gif accordingly as we decode
 		//we also need to get the original width and height of the gif which is easily done from the gif decoder class
 		gifName = FilenameUtils.removeExtension(gifName); //with no extension
-		String gifNamePath = currentDir + "/" + gifName + ".gif";  //   ex. c:\animation\tree.gif
+		//String gifNamePath = currentDir + "/" + gifName + ".gif";  //   ex. c:\animation\tree.gif
+		String gifNamePath = gifFilePath;
+		System.out.println("current dir from decodeGIF: " + gifFilePath);
 		
 		File file = new File(gifNamePath);
 		if (file.exists()) {
-			
+			  
 			  //since we are decoding, we need to first make sure the .rgb565 and .txt decoded file is not there and delete if so.
 			  String gifName565Path = currentDir + "/decoded/" + gifName + ".rgb565";  //   ex. c:\animation\decoded\tree.rgb565
 			  String gifNameTXTPath = currentDir + "/decoded/" + gifName + ".txt";  //   ex. c:\animation\decoded\tree.txt
