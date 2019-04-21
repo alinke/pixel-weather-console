@@ -4,7 +4,7 @@ public class Print_Usage {
 
 	public void printUsage(){
 
-	System.out.println("*** PIXEL: Console V3.3 *** \n"
+	System.out.println("*** PIXEL Command Line 3.3 ***\n" 
 			+ "Usage:"
 			+ "pixelc <options>"
 			+"Valid options are:\nGIF MODE\n"
@@ -30,12 +30,15 @@ public class Print_Usage {
 			+ "\n--32x324m  change LED matrix to 4 Mirrored 32x32s (displays the same animation on four 32x32 panels)"
 			+ "\n--64x32m  change LED matrix to 2 Mirrored 64x32s (displays the same animation on two 64x32 panels)"
 			+ "\n--superpixel  change LED matrix to SUPER PIXEL 64x64 old, do not use for Adafruit panels"
+			+ "\n--path=  use if your gif is in a sub-folder that is not in the same directly as pixelc.jar, specify the folder path where pixelc.jar resides ie, --path=/home/pi/pixel"
 			+ "\n--daemon  runs as a background process AND you must also add & at the end of the command line"
+			+ "\n--silent  silent mode, hide command line screen ouputs"
 			+ "\nEx. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1421 pixelc.jar --gif=tree.gif"
 			+ "\nEx. java -jar -Dioio.SerialPorts=/dev/tty.usbmodem1421 pixelc.jar --gif=tree.gif --daemon &"
 			+ "\nEx. java -jar -Dioio.SerialPorts=COM14 ~/pixel/pixelc.jar --gif=~/pixel/tree.gif"
 			+ "\nEx. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --loop=10 --framedelay=200"
 			+ "\nEx. java -jar -Dioio.SerialPorts=COM14 pixelc.jar --gif=tree.gif --superpixel --write\n"
+			+ "\nEx.  java -jar -Dioio.SerialPorts=/dev/tty.usbmodem14101 '/home/pi/pixel/pixelc.jar' --path='/home/pi/pixel' --gif='/home/pi/pixel/mamelibretro/pacman.gif' --64x32 --write --silent\n"
 			+ "\nSCROLLING TEXT MODE / QUICKBASE SEARCH / SERVICE NOW / TWITTER FEED\n"
 			+ "\n--quickbase    QuickBase mode, send some scrolling text from QuickBase"
 			+ "\n--qbuserid=<text>    QuickBase user id"

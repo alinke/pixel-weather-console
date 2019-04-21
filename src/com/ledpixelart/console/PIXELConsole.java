@@ -29,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,12 +74,6 @@ import twitter4j.conf.ConfigurationBuilder;
 import yahoofinance.Stock;
 import yahoofinance.YahooFinance;
 
-//import org.jdom2.Document;
-//import org.jdom2.Element;
-//import org.jdom2.JDOMException;
-//import org.jdom2.input.SAXBuilder;
-
-//import com.ledpixelart.pc.PixelApp;
 
 /******** Pseudo code for this app ***************
 Get the current matrix type from preferences or the command line
@@ -293,9 +288,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 	static String snowname="";
 	static String snowGUID="";
 	
-	private static String pixelLaunchPath_ = "";
-	private static boolean pathSpecified_ = false;
-	
+	private static String homePath_ = "";
+	private static boolean homePathSpecified_ = false;
+	public static boolean silentMode_ = false;
+	private static boolean absolutePath_ = false;
+	private static boolean relativePath_ = false;
 	private static String selectedLEDMatrix = "Adafruit 32x32";
 	
     private static enum Command
@@ -324,34 +321,40 @@ public class PIXELConsole extends IOIOConsoleApp {
 				} catch (IllegalArgumentException e) {
 				throw new BadArgumentsException("Unrecognized command: " + arg);
 			}
+			
+			
 		}
 
 	private static void parseOption(String arg) throws BadArgumentsException {
 			
+			if (arg.startsWith("--silent")) {    
+				silentMode_ = true;
+			}		
+			
 			if (arg.startsWith("--path=")) {    //april 2019 , added this path because absolute path gifs were failing, so we need to pass to java the path where pixelc is
-				pixelLaunchPath_ = arg.substring(7);
-				validCommandLine = true;
-				pathSpecified_ = true;
+					homePath_ = arg.substring(7);
+					validCommandLine = true;
+					homePathSpecified_ = true;
 			}	
 		
 			if (arg.startsWith("--proximity"))
 				{
 					ProxSensor = true;
 					validCommandLine = true;
-					System.out.println("Proximity Sensor enabled");
-				}
+					if (!silentMode_) System.out.println("Proximity Sensor enabled");
+			}
 			
 			if (arg.startsWith("--proximitypin="))
 			{  //we'll use pin34 by default unless the user overrides here
 				proximityPinString_ = arg.substring(15);
 				
 				if (Float.parseFloat(proximityPinString_) > 35 || Float.parseFloat(proximityPinString_) < 31 || proximityPinString_.contains(".")) 
-					System.out.println("The proximity pin number can be 31,32,33, or 34. Defaulting to a proximity sensor pin 34...");
+					if (!silentMode_) System.out.println("The proximity pin number can be 31,32,33, or 34. Defaulting to a proximity sensor pin 34...");
 				
 				else 
 				{
 					proximityPin_ = Integer.parseInt(proximityPinString_);
-					System.out.println("Proximity Pin: " + proximityPinString_);
+					if (!silentMode_) System.out.println("Proximity Pin: " + proximityPinString_);
 				}	
 			}
 			
@@ -360,18 +363,18 @@ public class PIXELConsole extends IOIOConsoleApp {
 				String TriggerUpperThresholdString = arg.substring(16);
 				
 				if (Float.parseFloat(TriggerUpperThresholdString) > 1000 || proximityPinString_.contains(".")) 
-					System.out.println("The upper trigger threshold for the proximity sensor cannot be over 1000 and must also be a whole number. Defaulting to 500...");
+					if (!silentMode_) System.out.println("The upper trigger threshold for the proximity sensor cannot be over 1000 and must also be a whole number. Defaulting to 500...");
 				
 				else
 				{
 					TriggerUpperThreshold_ = Integer.parseInt(TriggerUpperThresholdString);
-					System.out.println("Proximity Upper Trigger Threshold Override (Default:500) : " + TriggerUpperThresholdString);
+					if (!silentMode_) System.out.println("Proximity Upper Trigger Threshold Override (Default:500) : " + TriggerUpperThresholdString);
 				}	
 			}
 			
 			if (arg.startsWith("--proximityshow")) 
 			{
-				System.out.println("Displaying Proximity Sensor values");
+				if (!silentMode_) System.out.println("Displaying Proximity Sensor values");
 				ProxShow = true;
 			}
 			
@@ -380,22 +383,22 @@ public class PIXELConsole extends IOIOConsoleApp {
 				sensorLoopDelayString_ = arg.substring(18);
 				
 				if (Float.parseFloat(sensorLoopDelayString_) < 10 || Float.parseFloat(sensorLoopDelayString_) > 5000 || sensorLoopDelayString_.contains(".")) {
-					System.out.println("The sensor loop delay must be greater than 10 and less than 5000. Defaulting to 1000...");
+					if (!silentMode_) System.out.println("The sensor loop delay must be greater than 10 and less than 5000. Defaulting to 1000...");
 				}
 				else {
 					sensorLoopDelay_ = Integer.parseInt(sensorLoopDelayString_);
-					System.out.println("Sensor Loop Delay Override (default: 500): " + sensorLoopDelayString_);
+					if (!silentMode_) System.out.println("Sensor Loop Delay Override (default: 500): " + sensorLoopDelayString_);
 				}	
 			}
 			
 			if (arg.startsWith("--forecast")) {
 				reportTomorrowWeather = true;
-				System.out.println("Displaying tomorrow's forecast, omit if you want today's weather\n");
+				if (!silentMode_) System.out.println("Displaying tomorrow's forecast, omit if you want today's weather\n");
 			}
 			
 			if (arg.startsWith("--gifp=")) { //not using this one
 				gifFileName_ = arg.substring(7);
-				System.out.println("gif file name: " + gifFileName_);
+				if (!silentMode_) System.out.println("gif file name: " + gifFileName_);
 				gifModeInternal = true;
 				validCommandLine = true;
 				z++;
@@ -405,15 +408,20 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--gif=")) {
 				gifFileName_ = arg.substring(6);
 				gifFilePath_ = gifFileName_;    //we need the full path if using absolute path because it might be /pixel/mame-libretto/pacman.gif
-				//System.out.println("GIF file name: " + gifFileName_);
+				//if (!silentMode_) System.out.println("GIF file name: " + gifFileName_);
 				gifModeExternal = true;
 				validCommandLine = true;
 				z++;
 				
+				if (homePathSpecified_ == true) {
+					currentDir = homePath_;
+				}
+				
 				File GIFfile = new File(currentDir + "/" + gifFileName_); 
 				if (GIFfile.exists() && !GIFfile.isDirectory()) { 
 					currentDir = System.getProperty("user.dir");
-					System.out.println("GIF found using direct path, file name is: " + gifFileName_);
+					//if (!silentMode_) System.out.println("GIF found using direct path, file name is: " + gifFileName_);
+					relativePath_ = true;
 			    }
 				
 				else {
@@ -429,19 +437,19 @@ public class PIXELConsole extends IOIOConsoleApp {
 					
 					String jarDirpath = jarPath.substring(0,jarPath.lastIndexOf(File.separator));
 					
-					if (pathSpecified_ == true) {
-						currentDir = pixelLaunchPath_;
+					/*if (pathSpecified_ == true) {
+						currentDir = homePath_;
 					}
 					else {
 						currentDir = jarDirpath;  //this doesn't work and just returns so if absolute url and not relative, need to specify the path
-					}
+					}*/
 					
-					System.out.println("Working Path is: " + currentDir);
+					//if (!silentMode_) System.out.println("Working Path is: " + currentDir);
 					
 					if (gifFileName_.contains("~")) { //~ shortcut for home directory
 						
 						gifFileName_ = gifFileName_.substring(gifFileName_.lastIndexOf(File.separator) + 1).trim();
-						System.out.println("GIF found using home alias, file name is: " + gifFileName_);
+						//if (!silentMode_) System.out.println("GIF found using home alias, file name is: " + gifFileName_);
 						
 					}
 					
@@ -449,22 +457,9 @@ public class PIXELConsole extends IOIOConsoleApp {
 					
 						File GIFfileAbsolute = new File(gifFileName_);
 						if (GIFfileAbsolute.exists() && !GIFfileAbsolute.isDirectory()) { 
-							
-							System.out.println("gif file path: " + gifFileName_);
 	                     
 							gifFileName_ = GIFfileAbsolute.getName();
-							
-							//the commented out code here did not work on the Raspberry Pi so changed to above
-							/*String path = gifFileName_.
-							    substring(0,gifFileName_.lastIndexOf(File.separator));
-							
-							gifFileName_ = GIFfileAbsolute.getName();
-							System.out.println("GIF found using absolute path, file name is: " + GIFfileAbsolute.getName());*/
-							
-							// gifFileName_ = gifFileName_.
-							//    substring(0,gifFileName_.lastIndexOf(File.separator));
-							//gifFileName_ = GIFfileAbsolute.getName();
-							System.out.println("GIF found using absolute path, file name is: " + gifFileName_);
+							absolutePath_ = true;
 					    }
 						else {
 							System.out.println("GIF not found, please check the spelling and/or path, exiting now...");
@@ -476,7 +471,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--loop=")) {
 				loopString = arg.substring(7);
-				System.out.println("Number of times to loop = " + loopString);
+				if (!silentMode_) System.out.println("Number of times to loop = " + loopString);
 				loopMode = true;
 				setLoopInt(Integer.parseInt(loopString));
 			}
@@ -487,11 +482,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 				
 				if (Float.parseFloat(frameDelayString) < 1 || frameDelayString.contains(".")) {
 					setFrameDelayOverride(false);
-					System.out.println("The frame delay must be a whole number between 1 and 1000 (milliseconds), not overriding the frame deay");
+					if (!silentMode_) System.out.println("The frame delay must be a whole number between 1 and 1000 (milliseconds), not overriding the frame deay");
 				}
 				else {
 					setFrameDelayInt(Integer.parseInt(frameDelayString));
-					System.out.println("Frame delay override specified at " + frameDelayString + " milliseconds");
+					if (!silentMode_) System.out.println("Frame delay override specified at " + frameDelayString + " milliseconds");
 				}
 				
 				if (getFrameDelayInt() > 1000) {
@@ -502,7 +497,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--text=")) {
 				scrollingText_ = arg.substring(7);
-				System.out.println("Scrolling Text Mode Selected");
+				if (!silentMode_) System.out.println("Scrolling Text Mode Selected");
 				scrollingTextMode = true;
 				validCommandLine = true;
 				z++;
@@ -522,7 +517,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--twitter=")) {
 				twitterSearchString = arg.substring(10);
-				System.out.println("In Twitter mode with search term: " + twitterSearchString);
+				if (!silentMode_) System.out.println("In Twitter mode with search term: " + twitterSearchString);
 				scrollingTextMode = true;
 				twitterMode = true;
 				validCommandLine = true;
@@ -569,22 +564,22 @@ public class PIXELConsole extends IOIOConsoleApp {
 				twitterIntervalString = arg.substring(11);
 				
 				if (!twitterIntervalString.matches("[0-9]+")) {
-					System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
+					if (!silentMode_) System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
 				}
 				else {
 					if (Float.parseFloat(twitterIntervalString) < 10 || twitterIntervalString.contains(".") || Float.parseFloat(twitterIntervalString) > 86400) {
-						System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
+						if (!silentMode_) System.out.println("The Twitter search interval must be a whole number between 10 and 86400 (24 hours) in seconds. Defaulting to a Twitter search term refresh of 30 seconds...");
 					}
 					else {
 						twitterIntervalInt = Integer.parseInt(twitterIntervalString);
-						System.out.println("Twitter text from the search term will refresh every " + twitterIntervalString + " seconds");
+						if (!silentMode_) System.out.println("Twitter text from the search term will refresh every " + twitterIntervalString + " seconds");
 					}
 				}
 			}	
 			
 			if (arg.startsWith("--filtertweets=")) {
 				filterTweets = true;
-				System.out.println("Filtering Tweets that have RT, contain http:// or @");
+				if (!silentMode_) System.out.println("Filtering Tweets that have RT, contain http:// or @");
 			}
 			
 			//fix this later, not working fro some reason, twitterIntervalString is null even if --interval is there
@@ -610,7 +605,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			}
 			
 			if (arg.startsWith("--image=")) {
-				System.out.println("image file name: " + gifFileName_);
+				if (!silentMode_) System.out.println("image file name: " + gifFileName_);
 				gifModeExternal = true;
 				validCommandLine = true;
 				z++;
@@ -618,12 +613,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--write")) {
 				setWriteMode(true);
-				System.out.println("PIXEL is in write mode\n");
+				//if (!silentMode_) System.out.println("PIXEL is in write mode\n");
 			}
 			
 			if (arg.startsWith("--16x32")) {
 				ledMatrixType = 1;
-				//System.out.println("16x32 LED matrix has been selected");
 				selectedLEDMatrix = "32x16";
 			}
 			
@@ -794,7 +788,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--zip=")) {
 				zip_ = arg.substring(6);
-				System.out.println("zip code: " + zip_);
+				if (!silentMode_) System.out.println("zip code: " + zip_);
 				validCommandLine = true;
 				zipMode = true;
 				weatherMode = true;
@@ -802,7 +796,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			} else if (arg.startsWith("--zmw")) {
 				//zmw_ = arg.substring(0,7);
 				zmw_ = arg.substring(6);
-				System.out.println("zmw: " + zmw_);
+				if (!silentMode_) System.out.println("zmw: " + zmw_);
 				validCommandLine = true;
 				zipMode = false;
 				weatherMode = true;
@@ -811,17 +805,17 @@ public class PIXELConsole extends IOIOConsoleApp {
 			
 			if (arg.startsWith("--apikey=")) {
 				apikey_ = arg.substring(9);
-				System.out.println("Wunderground Api key: " + apikey_);
+				if (!silentMode_) System.out.println("Wunderground Api key: " + apikey_);
 				userAPIKey = true;
 			}	
 			
 			if (arg.startsWith("--daemon")) { //not using this one
-				System.out.println("Daemon Mode");
+				if (!silentMode_) System.out.println("Daemon Mode");
 				backgroundMode = true;
 			}	
 			
 			if (arg.startsWith("--debug")) { //not using this one
-				System.out.println("Debug Mode");
+				if (!silentMode_) System.out.println("Debug Mode");
 				debug_ = true;
 			}	
 			
@@ -830,7 +824,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--qbuserid=")) {  //8 characters
 				setQuickBaseUserID(arg.substring(11));
 				setQ(getQ() + 1);
-				System.out.println("QuickBase User ID: " + getQuickBaseUserID());
+				if (!silentMode_) System.out.println("QuickBase User ID: " + getQuickBaseUserID());
 			}
 				
 			if (arg.startsWith("--qbpassword=")) { //10 characters
@@ -841,42 +835,42 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--qbdomain=")) { //8 characters
 				setQuickBaseDomain(arg.substring(11));
 				setQ(getQ() + 1);
-				System.out.println("QuickBase DB Domain: " + getQuickBaseDomain());
+				if (!silentMode_) System.out.println("QuickBase DB Domain: " + getQuickBaseDomain());
 			}
 			
 			if (arg.startsWith("--qbdatabase=")) { 
 				setQuickBaseDBID(arg.substring(13));
 				setQ(getQ() + 1);
-				System.out.println("QuickBase DB ID: " + getQuickBaseDBID());
+				if (!silentMode_) System.out.println("QuickBase DB ID: " + getQuickBaseDBID());
 			}
 			
 			if (arg.startsWith("--qbqueryfield=")) { //12 characters
 				setQuickBaseQueryFieldID(arg.substring(15));
 				setQ(getQ() + 1);
-				System.out.println("QuickBase Field ID to Query: " + getQuickBaseQueryFieldID());
+				if (!silentMode_) System.out.println("QuickBase Field ID to Query: " + getQuickBaseQueryFieldID());
 			}
 			
 			if (arg.startsWith("--qbsearchstring=")) { 
 				String quickBaseSearchTermForDescriptionFieldString = arg.substring(17);
 				setQ(getQ() + 1);
 				setQuickBaseSearchTermForDescriptionField(new String(quickBaseSearchTermForDescriptionFieldString.replace(" ", "%20"))); //doesn't like it if there are spaces so need to replace space with %20
-				System.out.println("QuickBase Search String: " + getQuickBaseSearchTermForDescriptionField());
+				if (!silentMode_) System.out.println("QuickBase Search String: " + getQuickBaseSearchTermForDescriptionField());
 			}
 			
 			if (arg.startsWith("--qbreturnfields=")) { 
 				setQuickBaseReturnFields(arg.substring(17));
 				setQ(getQ() + 1);
-				System.out.println("QuickBase Field IDs to return: " + getQuickBaseReturnFields());
+				if (!silentMode_) System.out.println("QuickBase Field IDs to return: " + getQuickBaseReturnFields());
 			}
 			
 			if (arg.startsWith("--qbtoken=")) { 
 				setQuickBaseToken(arg.substring(10));
 				setQ(getQ() + 1);
-				System.out.println("QuickBase Application Token #: " + getQuickBaseToken());
+				if (!silentMode_) System.out.println("QuickBase Application Token #: " + getQuickBaseToken());
 			}
 			
 			if (arg.startsWith("--quickbase")) { 
-				System.out.println("QuickBase Mode");
+				if (!silentMode_) System.out.println("QuickBase Mode");
 				quickbaseMode = true;
 				validCommandLine = true;
 				z++;
@@ -898,7 +892,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--snowuserid=")) {  
 				snowUserID = arg.substring(13);
 				s++;
-				System.out.println("SNOW User ID: " + snowUserID);
+				if (!silentMode_) System.out.println("SNOW User ID: " + snowUserID);
 			}
 				
 			if (arg.startsWith("--snowpassword=")) { 
@@ -909,7 +903,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			if (arg.startsWith("--snowdomain=")) { 
 				snowDomain = arg.substring(13);
 				s++;
-				System.out.println("SNOW Domain: " + snowDomain);
+				if (!silentMode_) System.out.println("SNOW Domain: " + snowDomain);
 			}
 		
 		//Edited by :::::Sucheta ::::to make dynamic
@@ -930,7 +924,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 			//:::::::: 
 						
 			if (arg.startsWith("--snow")) { 
-				System.out.println("Service Now Mode");
+				if (!silentMode_) System.out.println("Service Now Mode");
 				snowMode = true;
 				validCommandLine = true;
 				z++;
@@ -941,15 +935,15 @@ public class PIXELConsole extends IOIOConsoleApp {
 				String snowRefreshIntervalString = arg.substring(14);
 				
 				if (!snowRefreshIntervalString.matches("[0-9]+")) {
-					System.out.println("The Service Now refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 20 scrolling messages...");
+					if (!silentMode_) System.out.println("The Service Now refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 20 scrolling messages...");
 				}
 				else { //ok it's only a number so now let's make sure it's within the right range
 					if (Float.parseFloat(snowRefreshIntervalString) < 1 || snowRefreshIntervalString.contains(".")) {
-						System.out.println("The Service Now refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 20 scrolling messages...");
+						if (!silentMode_) System.out.println("The Service Now refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 20 scrolling messages...");
 					}
 					else {
 						snowRefreshInterval = Integer.parseInt(snowRefreshIntervalString);
-						System.out.println("Service Now will refresh every " + snowRefreshIntervalString + " time(s) a scrolling message completes");
+						if (!silentMode_) System.out.println("Service Now will refresh every " + snowRefreshIntervalString + " time(s) a scrolling message completes");
 					}
 				}
 			}
@@ -958,28 +952,28 @@ public class PIXELConsole extends IOIOConsoleApp {
 				String quickBaseRefreshIntervalString = arg.substring(12);
 				
 				if (!quickBaseRefreshIntervalString.matches("[0-9]+")) {
-					System.out.println("The QuickBase refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 5 scrolling messages...");
+					if (!silentMode_) System.out.println("The QuickBase refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 5 scrolling messages...");
 				}
 				else { //ok it's only a number so now let's make sure it's within the right range
 					if (Float.parseFloat(quickBaseRefreshIntervalString) < 1 || quickBaseRefreshIntervalString.contains(".")) {
-						System.out.println("The QuickBase refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 5 scrolling messages...");
+						if (!silentMode_)  System.out.println("The QuickBase refresh interval must be a whole number 1 or greater. Defaulting to refreshing after 5 scrolling messages...");
 					}
 					else {
 						setQuickBaseRefreshInterval(Integer.parseInt(quickBaseRefreshIntervalString));
-						System.out.println("QuickBase will refresh every " + quickBaseRefreshIntervalString + " time(s) a scrolling message completes");
+						if (!silentMode_) System.out.println("QuickBase will refresh every " + quickBaseRefreshIntervalString + " time(s) a scrolling message completes");
 					}
 				}
 			}
 			
 			if (arg.startsWith("--stock=")) { 
 				stockSymbols = arg.substring(8);
-				System.out.println("Stock symbol requested: " + stockSymbols);
+				if (!silentMode_) System.out.println("Stock symbol requested: " + stockSymbols);
 				stockMode = true;
 			}
 			
 			if (arg.startsWith("--compliments")) { 
 				stockSymbols = arg.substring(13);
-				System.out.println("Compliments mode turned on, please make sure you enabled --proximity too");
+				if (!silentMode_) System.out.println("Compliments mode turned on, please make sure you enabled --proximity too");
 				complimentsMode = true;
 			}
 			
@@ -1002,7 +996,13 @@ public class PIXELConsole extends IOIOConsoleApp {
 		}
 		
 	protected void run(String[] args) throws IOException {		
-		//System.out.println("Pixel integration with delayted run() via sleep.");
+		//System.out.println("Pixel integration with delayed run() via sleep.");
+		
+		if (!silentMode_ && relativePath_) System.out.println("GIF found using direct path, file name is: " + gifFileName_);
+		if (!silentMode_ && absolutePath_) System.out.println("GIF found using absolute path, file name is: " + gifFileName_);
+		if (!silentMode_) System.out.println("Working Path is: " + currentDir);
+		if (!silentMode_) System.out.println("PIXEL is in write mode\n");
+	
 		if (backgroundMode) {
 			while(stayConnected)
 				            {
@@ -1035,7 +1035,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 				System.exit(1);
 			} else {
 				//System.out.println("Unknown input. t=toggle, n=on, f=off, q=quit.");
-				 System.out.println("Unknown input. q=quit.");
+				System.out.println("Unknown input. q=quit.");
 			}
 		} 		
 	}
@@ -1045,13 +1045,29 @@ public class PIXELConsole extends IOIOConsoleApp {
 	 private static void streamGIF(boolean writeMode) 
 	    {
 		
-		if (pixel.GIFNeedsDecoding(currentDir, gifFileName_, currentResolution) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
-			System.out.println("Decoding " + currentDir + gifFileName_);
-			pixel.decodeGIF(currentDir, gifFilePath_, gifFileName_, currentResolution,KIND.width,KIND.height);
-			
-		}
-		else {
-			System.out.println(gifFileName_ + " is already decoded, skipping decoding step");
+		try {
+			if (pixel.GIFNeedsDecoding(currentDir, gifFileName_, currentResolution, gifFilePath_) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
+				if (!silentMode_)  System.out.println("Decoding " + gifFilePath_);
+				try {
+					pixel.decodeGIF(currentDir, gifFilePath_, gifFileName_, currentResolution,KIND.width,KIND.height);
+				} catch (NoSuchAlgorithmException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			else {
+				if (!silentMode_) System.out.println(gifFileName_ + " is already decoded, skipping decoding step");
+			}
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 	    setGIFnumFrames(pixel.getDecodednumFrames(currentDir, gifFileName_));
@@ -1066,8 +1082,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	 setGIFfps(pixel.getDecodedfps(currentDir, gifFileName_)); //get the fps
 	    }
 	    
-	    System.out.println(gifFileName_ + " contains " + getGIFnumFrames() + " frames with a " + getGIFselectedFileDelay() + "ms frame delay");
-	    System.out.println("Selected LED Matrix: " + selectedLEDMatrix);
+	    if (!silentMode_) System.out.println(gifFileName_ + " contains " + getGIFnumFrames() + " frames with a " + getGIFselectedFileDelay() + "ms frame delay");
+	    if (!silentMode_) System.out.println("Selected LED Matrix: " + selectedLEDMatrix);
 		//****** Now let's setup the animation ******
 		    
 		   // animation_name = selectedFileName;
@@ -1079,7 +1095,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    					pixel.interactiveMode();
 	    					//send loading image
 	    					pixel.writeMode(getGIFfps()); //need to tell PIXEL the frames per second to use, how fast to play the animations
-	    					System.out.println("Writing to PIXEL's microSD card..."); 
+	    					if (!silentMode_) System.out.println("Writing to PIXEL's microSD card..."); 
 	    					  int y;
 	    				    	 
 	    				   	  //for (y=0;y<numFrames-1;y++) { //let's loop through and send frame to PIXEL with no delay
@@ -1088,11 +1104,11 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				 			//framestring = "animations/decoded/" + animation_name + ".rgb565";
 	    				 			//System.out.println("Writing to PIXEL: Frame " + y + "of " + GIFnumFrames + " Total Frames");
 
-	    			    			System.out.println("Writing frame " + y);
+	    				    	  if (!silentMode_) System.out.println("Writing frame " + y);
 	    				 		    pixel.SendPixelDecodedFrame(currentDir, gifFileName_, y, getGIFnumFrames(), getGIFresolution(), KIND.width,KIND.height);
 	    				   	  } //end for loop
 	    					pixel.playLocalMode(); //now tell PIXEL to play locally
-	    					System.out.println("Writing complete, now displaying...");
+	    					if (!silentMode_) System.out.println("Writing complete, now displaying...");
 	    					//System.exit(0);
 	    					exit(0,200);
 	    			}
@@ -1113,7 +1129,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    	               			    
 	    	               			    if (loopMode == true && loopCounter >=getLoopInt()) { //then we are done and let's exit out
 	    	               			    	if (timer != null) timer.stop();
-	    	               					System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
+	    	               			    	if (!silentMode_) System.out.println("We've looped " + loopCounter + " times and are now exiting, you may omit the --loop command line option if you want to loop indefinitely");
 	    	               			    	//System.exit(0);
 	    	               					exit(0,200);
 	    	               			    }
@@ -1312,10 +1328,6 @@ public class PIXELConsole extends IOIOConsoleApp {
                 frame_length = 8192;
                 currentResolution = 128; 
                 break;
-                
-                
-                
-                
 		    	 
 		     default:	    		 
 		    	 KIND = ioio.lib.api.RgbLedMatrix.Matrix.ADAFRUIT_32x32; //v2 as the default
@@ -1379,7 +1391,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 
 	               NodeList name = element.getElementsByTagName(targetNode);
 	               Element line = (Element) name.item(0);
-	               System.out.println("Count: " + getCharacterDataFromElement(line));
+	               if (!silentMode_) System.out.println("Count: " + getCharacterDataFromElement(line));
 	               xmlValue = getCharacterDataFromElement(line);
 	            }
 	        }
@@ -1495,7 +1507,7 @@ static void CheckandRunMode() {
 		        
 				try {
 					result = twitter.search(query);
-					System.out.println("Number of matched tweets: " + result.getCount());
+					if (!silentMode_) System.out.println("Number of matched tweets: " + result.getCount());
 				} catch (TwitterException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -1507,7 +1519,7 @@ static void CheckandRunMode() {
 							
 							//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
 							twitterResult = status.getText();
-							System.out.println(status.getText());
+							if (!silentMode_) System.out.println(status.getText());
 			                //TO DO have seen some cases where no results are returned, need to fix that and also we should show a different tweet if no new one
 						}
 					}
@@ -1517,7 +1529,7 @@ static void CheckandRunMode() {
 							
 							//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
 							twitterResult = status.getText();
-							System.out.println(status.getText()); //it's the last one so let's display it
+							if (!silentMode_) System.out.println(status.getText()); //it's the last one so let's display it
 						}
 					}
 		        }
@@ -1546,6 +1558,10 @@ static void CheckandRunMode() {
 	  			//IOIOLibVersion = ioio_.getImplVersion(v.IOIOLIB_VER);
 	  			//**********************************************************
 	  			
+	  			//**** informational messages here *****
+	  			if (!silentMode_) System.out.println("GIF file name: " + gifFileName_);
+	  			//**************************************
+	  			
   				PIXELConsole.this.ioiO = ioio_;
   				
   				setupEnvironment();  //here we set the PIXEL LED matrix type
@@ -1555,7 +1571,7 @@ static void CheckandRunMode() {
                 //pixel.matrix = ioio_.openRgbLedMatrix(pixel.KIND);   //AL could not make this work, did a quick hack, Roberto probably can change back to the right way
                 pixel.matrix = ioio_.openRgbLedMatrix(KIND);
                 pixel.ioiO = ioio_;
-                System.out.println("Found PIXEL: " + pixel.matrix + "\n");
+                if (!silentMode_) System.out.println("Found PIXEL: " + pixel.matrix + "\n");
 			
                 CheckandRunMode();
 			}
@@ -1643,7 +1659,7 @@ static void CheckandRunMode() {
 		        
 				try {
 					result = twitter.search(query);
-					System.out.println("Number of matched tweets: " + result.getCount());
+					if (!silentMode_) System.out.println("Number of matched tweets: " + result.getCount());
 				} catch (TwitterException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -1655,7 +1671,7 @@ static void CheckandRunMode() {
 							
 							//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
 							twitterResult = status.getText();
-							System.out.println(status.getText());
+							if (!silentMode_) System.out.println(status.getText());
 						}
 					}
 					
@@ -1664,7 +1680,7 @@ static void CheckandRunMode() {
 							
 							//System.out.println("@" + status.getUser().getScreenName() + ":" + status.getText());
 							twitterResult = status.getText();
-							System.out.println(status.getText()); //it's the last one so let's display it
+							if (!silentMode_) System.out.println(status.getText()); //it's the last one so let's display it
 						}
 					}
 		        }
