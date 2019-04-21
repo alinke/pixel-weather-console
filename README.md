@@ -1,4 +1,4 @@
-pixel-console version
+pixel-cli
 =====================
 
 A PIXEL command line app where no GUI is required.
