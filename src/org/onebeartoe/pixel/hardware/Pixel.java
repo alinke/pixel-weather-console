@@ -85,7 +85,7 @@ public class Pixel
     
     private float fps;
     
-    private static String decodedDirPathExternal;
+    //private static String decodedDirPathExternal;
     
     private BufferedImage rotatedFrame;
     
@@ -197,7 +197,9 @@ private int[] getDecodedMetadata(String currentDir, String gifName) {  //NOT USI
 		   return (decodedMetadata); //we are returning an array here
 	}
 
-public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentResolution, String gifFilePath) throws NoSuchAlgorithmException, IOException {  //need to pass the path of the GIF too
+public boolean GIFNeedsDecoding(String workingDir, String gifName, int currentResolution, String gifFullPath, String decodedDir) throws NoSuchAlgorithmException, IOException {  //need to pass the path of the GIF too
+	
+	//workingDir is /home/pi/pixel/atari2600/  gifName is pacman  gifFilePath is /home/pi/pixel/atari2600/pacman.gif  decodedDir is /home/pi/pixel/atari2600/decoded/
 	
 	/*In this method we will first check if the decoded files are there
 	if they are present, then let's read them and make sure the resolution in the decoded file matches the current matrix
@@ -214,23 +216,26 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	
 	 //let's get the MD5 
 	MessageDigest md = MessageDigest.getInstance("MD5");
-    String SelectedFileMD5_ = checksum(gifFilePath, md);
+    String SelectedFileMD5_ = checksum(gifFullPath, md);
     //System.out.println("md5 of current file is " + SelectedFileMD5_);
     //int SelectedFileMD5Int = Integer.parseInt(SelectedFileMD5_);	
 	
-	gifName = FilenameUtils.removeExtension(gifName); //with no extension
+	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	
 	//System.out.println("PIXEL LED panel resolution is: " + currentResolution);
+	String decodedGIFPathTXT = decodedDir + gifName + ".txt";
+	String decodedGIFPath565 = decodedDir + gifName + ".rgb565";
 	
-	String decodedGIFPathTXT = currentDir + "/decoded/" + gifName + ".txt";
-	String decodedGIFPath565 = currentDir + "/decoded/" + gifName + ".rgb565";
+	//System.out.println("Decoded GIF Path: " + decodedGIFPathTXT); //to do remove
 	
 	File filetxt = new File(decodedGIFPathTXT);
 	File file565 = new File(decodedGIFPath565);
 	
+	//System.out.println("Decoded GIF name only: " + gifName); //to do remove
+	
 	if (filetxt.exists() && file565.exists()) { //need to ensure both files are there
 		   
-			if ((getDecodedresolution(currentDir, gifName) == currentResolution) && (getDecodedmd5(currentDir, 			gifName).equals(SelectedFileMD5_))) {  //does the resolution in the encoded txt 		
+			if ((getDecodedresolution(gifName, decodedDir) == currentResolution) && (getDecodedmd5(gifName, decodedDir).equals(SelectedFileMD5_))) {  //does the resolution in the encoded txt 		
 				//System.out.println("md5 of current file is and matches " + SelectedFileMD5_);
 				return false;     //false means we don't need to encode
 			}
@@ -244,17 +249,21 @@ public boolean GIFNeedsDecoding(String currentDir, String gifName, int currentRe
 	}
 }
 
-public int getDecodednumFrames(String currentDir, String gifName) {  //need to return the meta data
+public int getDecodednumFrames(String gifName, String decodedDir) {  //need to return the meta data
 	
-	gifName = FilenameUtils.removeExtension(gifName); //with no extension
+	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
 	//String gifNamePath = gifName + ".txt";
-	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+	
+	//String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+	
+	String gifDecodedTxtPath = decodedDir + gifName + ".txt";   //home/pi/pixel/atari2600/decoded/pacman.txt
+	
 	//System.out.println("Decoded Path: " + gifNamePath);
-	File filemeta = new File(gifNamePath);    	
+	File filemeta = new File(gifDecodedTxtPath);    	
 	FileInputStream decodedFile = null; //fix this
 	try {
-		decodedFile = new FileInputStream(gifNamePath);
+		decodedFile = new FileInputStream(gifDecodedTxtPath);
 	} catch (FileNotFoundException e1) {
 		// TODO Auto-generated catch block
 		e1.printStackTrace();
@@ -281,15 +290,16 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 	   return (selectedFileTotalFrames);
 }
     
-    public float getDecodedfps(String currentDir, String gifName) {  //need to return the meta data
+    public float getDecodedfps(String gifName, String decodedDir) {  //need to return the meta data
     	
-    	gifName = FilenameUtils.removeExtension(gifName); //with no extension, ex. tree instead of tree.gif
-    	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
-    	File filemeta = new File(gifNamePath);
+    	//gifName = FilenameUtils.removeExtension(gifName); //with no extension, ex. tree instead of tree.gif
+    	//String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+    	String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
+    	File filemeta = new File(gifDecodedTxtPath);
     	
     	FileInputStream decodedFile = null; //fix this
     	try {
-			decodedFile = new FileInputStream(gifNamePath);
+			decodedFile = new FileInputStream(gifDecodedTxtPath);
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -322,17 +332,19 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 		   return (fps);
 	}
     
-    public int getDecodedframeDelay(String currentDir, String gifName) {  //need to return the meta data
+    public int getDecodedframeDelay(String gifName, String decodedDir) {  //need to return the meta data
     	
     	
-    	gifName = FilenameUtils.removeExtension(gifName); //with no extension
-    	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+    	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
     	
-    	File filemeta = new File(gifNamePath);
+    	//String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+    	String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
+    	
+    	File filemeta = new File(gifDecodedTxtPath);
     	
     	FileInputStream decodedFile = null; //fix this
     	try {
-			decodedFile = new FileInputStream(gifNamePath);
+			decodedFile = new FileInputStream(gifDecodedTxtPath);
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -361,18 +373,20 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
     
    
     
- public int getDecodedresolution(String currentDir, String gifName) {  //need to return the meta data
+ public int getDecodedresolution(String gifName, String decodedDir) {  //need to return the meta data
     	
-	    gifName = FilenameUtils.removeExtension(gifName); //with no extension
+	    //gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	    //String framestring = "animations/decoded/" + animation_name + ".rgb565";
 	   // String gifNamePath = gifName + ".txt";
 	    //System.out.println("Decoded Path: " + currentDir + "/decoded/" + gifName + ".txt");
-	    String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
-    	File filemeta = new File(gifNamePath);
+	    //String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+	    
+		String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
+    	File filemeta = new File(gifDecodedTxtPath);
     	
     	FileInputStream decodedFile = null; //fix this
     	try {
-			decodedFile = new FileInputStream(gifNamePath);
+			decodedFile = new FileInputStream(gifDecodedTxtPath);
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -399,18 +413,21 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 		   return (resolution);
 	}
  
- public String getDecodedmd5(String currentDir, String gifName) {  //returns md5 of the target gif
+ public String getDecodedmd5(String gifName, String decodedDir) {  //returns md5 of the target gif
  	
-	    gifName = FilenameUtils.removeExtension(gifName); //with no extension
+	    //gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	    //String framestring = "animations/decoded/" + animation_name + ".rgb565";
 	   // String gifNamePath = gifName + ".txt";
 	    //System.out.println("Decoded Path: " + currentDir + "/decoded/" + gifName + ".txt");
-	    String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
-	    File filemeta = new File(gifNamePath);
+	 
+	   // String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
+	    String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
+	    
+	    File filemeta = new File(gifDecodedTxtPath);
  	
  	FileInputStream decodedFile = null; //fix this
  	try {
-			decodedFile = new FileInputStream(gifNamePath);
+			decodedFile = new FileInputStream(gifDecodedTxtPath);
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -448,15 +465,17 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 
     
     
-    public void SendPixelDecodedFrame(String currentDir, String gifName, int x, int selectedFileTotalFrames, int selectedFileResolution, int frameWidth, int frameHeight) {
+    public void SendPixelDecodedFrame(String gifName, int x, int selectedFileTotalFrames, int selectedFileResolution, int frameWidth, int frameHeight, String decodedDir) {
 		 
     	BitmapBytes = new byte[frameWidth * frameHeight * 2]; //512 * 2 = 1024 or 1024 * 2 = 2048
 		frame_ = new short[frameWidth * frameHeight];
     	
-    	gifName = FilenameUtils.removeExtension(gifName); //with no extension
-    	String gifNamePath = currentDir + "/decoded/" + gifName + ".rgb565";  //  ex. c:\animations\decoded\tree.rgb565
+    	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
+    	//String gifNamePath = currentDir + "/decoded/" + gifName + ".rgb565";  //  ex. c:\animations\decoded\tree.rgb565
     	
-    	File file = new File(gifNamePath);
+    	String gifDecodedRGB565Path = decodedDir + gifName + ".rgb565"; 
+    	
+    	File file = new File(gifDecodedRGB565Path);
 			if (file.exists()) {
 				
 			/*Because the decoded gif is one big .rgb565 file that contains all the frames, we need
@@ -578,39 +597,33 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 			
 			else {
 				//showToast("We have a problem, couldn't find the decoded file");
-				System.err.println("An error occured while trying to load " + gifNamePath + ".");
-	    	    System.err.println("Make sure " + gifNamePath + "is included in the executable JAR.");
+				System.err.println("An error occured while trying to load " + gifDecodedRGB565Path + ".");
+	    	    //System.err.println("Make sure " + gifNamePath + "is included in the executable JAR.");
 	    	   // e.printStackTrace();
 			}
 	}
     
 	
     
-    public void decodeGIF(String currentDir, String gifFilePath, String gifName, int currentResolution, int pixelMatrix_width, int pixelMatrix_height) throws NoSuchAlgorithmException, IOException {  //pass the matrix type
+    public void decodeGIF(String gifFullPath, String gifName, int currentResolution, int pixelMatrix_width, int pixelMatrix_height, String decodedDir) throws NoSuchAlgorithmException, IOException {  //pass the matrix type
 		
 		//we're going to decode a native GIF into our RGB565 format
 	    //we'll need to know the resolution of the currently selected matrix type: 16x32, 32x32, 32x64, 64x64, 64x16, 128x16, 256x16
 		//and then we will receive the gif accordingly as we decode
 		//we also need to get the original width and height of the gif which is easily done from the gif decoder class
-		gifName = FilenameUtils.removeExtension(gifName); //with no extension
-		//String  = currentDir + "/" + gifName + ".gif";  //   ex. c:\animation\tree.gif
-		//System.out.println("currentDir " + currentDir);
-		// /Users/al/pi/mame-libretro/1944.gif , need to get /Users/al/pi/decoded
-		//String gifNamePath = gifFilePath;
 		
-		File file = new File(gifFilePath);
+		File file = new File(gifFullPath);
 		
 		if (file.exists()) {
 			  
 			 //let's get the MD5 
 			 MessageDigest md = MessageDigest.getInstance("MD5");
-	         String md5 = checksum(gifFilePath, md);
+	         String md5 = checksum(gifFullPath, md);
 	        // System.out.println("md5 " + md5);
 			
-			  //since we are decoding, we need to first make sure the .rgb565 and .txt decoded file is not there and delete if so.
-			  String gifName565Path = currentDir + "/decoded/" + gifName + ".rgb565";  //   ex. c\animation\decoded\tree.rgb565
-			  String gifNameTXTPath = currentDir + "/decoded/" + gifName + ".txt";  //   ex. c:\animation\decoded\tree.txt
-			  
+	         String gifNameTXTPath = decodedDir + gifName + ".txt";
+	         String gifName565Path = decodedDir + gifName + ".rgb565";
+	     	
 			  File file565 = new File(gifName565Path);
 			  File fileTXT = new File(gifNameTXTPath);
 			  
@@ -619,7 +632,7 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 			  //*******************************************************************************************
 			
 			  GifDecoder d = new GifDecoder();
-	          d.read(gifFilePath);
+	          d.read(gifFullPath);
 	          int numFrames = d.getFrameCount(); 
 	          int frameDelay = d.getDelay(1); //even though gifs have a frame delay for each frmae, pixel doesn't support this so we'll take the frame rate of the second frame and use this for the whole animation. We take the second frame because often times the frame delay of the first frame in a gif is much longer than the rest of the frames
 	          
@@ -638,7 +651,7 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 			              rotatedFrame = d.getFrame(0);  
 			              
 			    		 if (frameWidth != pixelMatrix_width || frameHeight != pixelMatrix_height) {
-			    			 if (!PIXELConsole.silentMode_) System.out.println("Resizing and encoding " + gifFilePath + " frame " + i);
+			    			 if (!PIXELConsole.silentMode_) System.out.println("Resizing and encoding " + gifFullPath + " frame " + i);
 			    			// rotatedFrame = Scalr.resize(rotatedFrame, pixelMatrix_width, pixelMatrix_height); //resize it, need to make sure we do not anti-alias
 			    			 
 			    			 try {
@@ -649,7 +662,7 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 							}
 			    		 }
 			    		 else {
-			    			 if (!PIXELConsole.silentMode_) System.out.println("Encoding " + gifFilePath + " frame " + i);
+			    			 if (!PIXELConsole.silentMode_) System.out.println("Encoding " + gifFullPath + " frame " + i);
 			    		 }
 			            
 			             //this code here to convert a java image to rgb565 taken from stack overflow http://stackoverflow.com/questions/8319770/java-image-conversion-to-rgb565/
@@ -699,9 +712,15 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 			                    }
 			                }
 					   		    
-					     decodedDirPathExternal = currentDir + "/decoded" ;   //  ex. c:\animations\decoded
+		            	 /* if (PIXELConsole.OS.indexOf("win") >= 0) {
+		            		  decodedDirPathExternal = workingDir + "decoded\\" ;   //  ex. c:\animations\decoded
+		            	  }
+		            	  else {
+		            		  decodedDirPathExternal = workingDir + "decoded/" ;   //  ex. c:\animations\decoded
+		            	  }*/
+		            	 
 					   		    
-					   		 File decodeddir = new File(decodedDirPathExternal); //this could be gif, gif64, or usergif
+					   		 File decodeddir = new File(decodedDir); //this could be gif, gif64, or usergif
 							    if(decodeddir.exists() == false)
 					             {
 							    	decodeddir.mkdirs();
@@ -709,7 +728,8 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 							
 						   			try {
 									
-										appendWrite(BitmapBytes, decodedDirPathExternal + "/" + gifName + ".rgb565"); //this writes one big file instead of individual ones
+										//appendWrite(BitmapBytes, decodedDirPathExternal + "/" + gifName + ".rgb565"); //this writes one big file instead of individual ones
+										appendWrite(BitmapBytes, decodedDir + gifName + ".rgb565"); //this writes one big file instead of individual ones
 										
 										
 									} catch (IOException e1) {
@@ -717,8 +737,6 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 										//Log.e("PixelAnimate", "Had a problem writing the original unified animation rgb565 file");
 										e1.printStackTrace();
 									}
-						  
-		             
 		          } //end for
 	        	
 	        	  
@@ -732,7 +750,7 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 		            // rotatedFrame = Scalr.rotate(rotatedFrame, Scalr.Rotation.FLIP_HORZ, null); //fixed bug, no longer need to flip the image
 		              
 		    		 if (frameWidth != pixelMatrix_width || frameHeight != pixelMatrix_height) {
-		    			 if (!PIXELConsole.silentMode_) System.out.println("Resizing and encoding " + gifFilePath + " frame " + i);
+		    			 if (!PIXELConsole.silentMode_) System.out.println("Resizing and encoding " + gifFullPath + " frame " + i);
 		    			// rotatedFrame = Scalr.resize(rotatedFrame, pixelMatrix_width, pixelMatrix_height); //resize it, need to make sure we do not anti-alias
 		    			 
 		    			 try {
@@ -743,7 +761,7 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 						}
 		    		 }
 		    		 else {
-		    			 if (!PIXELConsole.silentMode_) System.out.println("Encoding " + gifFilePath + " frame " + i);
+		    			 if (!PIXELConsole.silentMode_) System.out.println("Encoding " + gifFullPath + " frame " + i);
 		    		 }
 		            
 		             //this code here to convert a java image to rgb565 taken from stack overflow http://stackoverflow.com/questions/8319770/java-image-conversion-to-rgb565/
@@ -793,9 +811,14 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 		                    }
 		                }
 				   		    
-				     decodedDirPathExternal = currentDir + "/decoded" ;   //  ex. c:\animations\decoded
+	            	/*  if (PIXELConsole.OS.indexOf("win") >= 0) {
+	            		  decodedDirPathExternal = workingDir + "decoded\\" ;   //  ex. c:\animations\decoded
+	            	  }
+	            	  else {
+	            		  decodedDirPathExternal = workingDir + "decoded/" ;   //  ex. c:\animations\decoded
+	            	  }*/
 				   		    
-				   		 File decodeddir = new File(decodedDirPathExternal); //this could be gif, gif64, or usergif
+				   		 File decodeddir = new File(decodedDir); //this could be gif, gif64, or usergif
 						    if(decodeddir.exists() == false)
 				             {
 						    	decodeddir.mkdirs();
@@ -803,7 +826,8 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 						
 					   			try {
 								
-									appendWrite(BitmapBytes, decodedDirPathExternal + "/" + gifName + ".rgb565"); //this writes one big file instead of individual ones
+									//appendWrite(BitmapBytes, decodedDirPathExternal + "/" + gifName + ".rgb565"); //this writes one big file instead of individual ones
+									appendWrite(BitmapBytes, decodedDir + gifName + ".rgb565"); //this writes one big file instead of individual ones
 									
 									
 								} catch (IOException e1) {
@@ -828,7 +852,8 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 		   			filetag = String.valueOf(numFrames) + "," + String.valueOf(frameDelay) + "," + String.valueOf(currentResolution) + "," + String.valueOf(md5); //current resolution may need to change to led panel type
 		   		}
 		   				
-	     		   File myFile = new File(decodedDirPathExternal + "/" + gifName + ".txt");  				       
+	     		   //File myFile = new File(decodedDirPathExternal + "/" + gifName + ".txt");  
+	     		   File myFile = new File(decodedDir + gifName + ".txt");  			
 	     		   try {
 					myFile.createNewFile();
 					FileOutputStream fOut = null;
@@ -844,7 +869,8 @@ public int getDecodednumFrames(String currentDir, String gifName) {  //need to r
 				}
 		}
 		else {
-			System.out.println("ERROR  Could not write " + decodedDirPathExternal + "/" + gifName + ".txt");
+			//System.out.println("ERROR  Could not write " + decodedDirPathExternal + "/" + gifName + ".txt");
+			System.out.println("ERROR  Could not write " + decodedDir + gifName + ".txt");
 		}
 			
 	}  

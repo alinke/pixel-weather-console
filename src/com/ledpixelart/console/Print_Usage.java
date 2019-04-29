@@ -4,7 +4,7 @@ public class Print_Usage {
 
 	public void printUsage(){
 
-	System.out.println("*** PIXEL Command Line 3.3 ***\n" 
+	System.out.println("*** PIXEL Command Line 3.4 ***\n" 
 			+ "Usage:"
 			+ "pixelc <options>"
 			+"Valid options are:\nGIF MODE\n"

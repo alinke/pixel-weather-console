@@ -19,6 +19,7 @@ import org.w3c.dom.NodeList;
 
 import ioio.lib.api.exception.ConnectionLostException;
 
+//THIS CLASS NO LONGER USED, used this when we had the Wunderground as a free API, now it's paid so switched to OpenWeather
 
 public class Weather_Wunderground extends PIXELConsole {
 	private static InputStream inputXml = null;
@@ -389,7 +390,7 @@ public class Weather_Wunderground extends PIXELConsole {
 		    	               		String framestring = "animations/decoded/" + getSelectedFileName();
 		    	               		
 		    	               		System.out.println("framestring: " + framestring);
-		    	               		pixel.SendPixelDecodedFrame(currentDir, getSelectedFileName(), i, getGIFnumFrames(), getGIFresolution(),KIND.width,KIND.height);
+		    	               		pixel.SendPixelDecodedFrame(getSelectedFileName(), i, getGIFnumFrames(), getGIFresolution(),KIND.width,KIND.height, framestring);
 		    	               	
 		    	      
 		                    }

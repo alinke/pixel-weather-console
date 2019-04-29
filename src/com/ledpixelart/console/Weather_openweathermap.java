@@ -183,7 +183,7 @@ public class Weather_openweathermap extends PIXELConsole {
 	   
 	}
 	
-	 protected static void runWeatherAnimations() {
+	 protected static  void runWeatherAnimations() {
 
 
 			String selectedFileName = getWeatherCondition();
@@ -194,11 +194,24 @@ public class Weather_openweathermap extends PIXELConsole {
 			System.out.println("weather path: " + path);
 
 			InputStream decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path);
+			
+			//none of this worked on mac but does it work on the Pi?
+			
+			//decodedFile = ClassLoader.getSystemClassLoader().getResourceAsStream(path);
+			
+			/* InputStream decodedFile = PIXELConsole.class.getResourceAsStream("/resources/" + path);
+		        if (decodedFile == null) {
+		            // this is how we load file within editor (eg eclipse)
+		        	decodedFile = PIXELConsole.class.getClassLoader().getResourceAsStream(path);
+		        }*/
+			
+			
 			//note can't use file operator here as you can't reference files from a jar file
 
 			if (decodedFile != null) 
 			{
-			    // ok good, now let's read it, we need to get the total numbers of frames and the frame speed
+				System.out.println("wenthere: " + path);
+				// ok good, now let's read it, we need to get the total numbers of frames and the frame speed
 			    String line = "";
 
 			    try 
@@ -291,7 +304,7 @@ public class Weather_openweathermap extends PIXELConsole {
 		    
 	 }
 	 
-	 private static void weatherGIF() //not used
+	/* private static void weatherGIF() //NOT USED!!!!!
 	 {
 
 		 
@@ -306,10 +319,10 @@ public class Weather_openweathermap extends PIXELConsole {
 			
 			//TO DO make sure to test the weather gifs now that we've made these changes
 			
-			/*GIFfps = pixel.getDecodedfps(currentDir, selectedFileName); //get the fps //to do fix this later becaause we are getting from internal path
+			GIFfps = pixel.getDecodedfps(currentDir, selectedFileName); //get the fps //to do fix this later becaause we are getting from internal path
 		    GIFnumFrames = pixel.getDecodednumFrames(currentDir, selectedFileName);
 		    GIFselectedFileDelay = pixel.getDecodedframeDelay(currentDir, selectedFileName);
-		    GIFresolution = pixel.getDecodedresolution(currentDir, selectedFileName);*/
+		    GIFresolution = pixel.getDecodedresolution(currentDir, selectedFileName);
 		    
 		    setGIFnumFrames(pixel.getDecodednumFrames(currentDir, getSelectedFileName()));
 		    setGIFresolution(pixel.getDecodedresolution(currentDir, getSelectedFileName()));
@@ -353,7 +366,7 @@ public class Weather_openweathermap extends PIXELConsole {
 		    	               		String framestring = "animations/decoded/" + getSelectedFileName();
 		    	               		
 		    	               		System.out.println("framestring: " + framestring);
-		    	               		pixel.SendPixelDecodedFrame(currentDir, getSelectedFileName(), i, getGIFnumFrames(), getGIFresolution(),KIND.width,KIND.height);
+		    	               		pixel.SendPixelDecodedFrame(getSelectedFileName(), i, getGIFnumFrames(), getGIFresolution(),KIND.width,KIND.height, "animations/decoded/");
 		    	               	
 		    	      
 		                    }
@@ -364,7 +377,7 @@ public class Weather_openweathermap extends PIXELConsole {
 		    				   timer.start();
 		    				   System.out.println("file delay: " + getSelectedFileDelay());
 		    
-	 }
+	 }*/
 
 	
 }

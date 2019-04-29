@@ -17,6 +17,8 @@ import org.w3c.dom.Element;
 
 import ioio.lib.api.exception.ConnectionLostException;
 
+//THIS CLASS NO LONGER USED, used this when we had the Yahoo Weather API which is now no more
+
 public class Weather extends PIXELConsole {
 	private static InputStream inputXml = null;
 	 protected static void sendFramesToPIXELWeather() 
@@ -433,7 +435,7 @@ public class Weather extends PIXELConsole {
 		    	               		String framestring = "animations/decoded/" + getSelectedFileName();
 		    	               		
 		    	               		System.out.println("framestring: " + framestring);
-		    	               		pixel.SendPixelDecodedFrame(currentDir, getSelectedFileName(), i, getGIFnumFrames(), getGIFresolution(),KIND.width,KIND.height);
+		    	               		pixel.SendPixelDecodedFrame(getSelectedFileName(), i, getGIFnumFrames(), getGIFresolution(),KIND.width,KIND.height, framestring);
 		    	               	
 		    	      
 		                    }
