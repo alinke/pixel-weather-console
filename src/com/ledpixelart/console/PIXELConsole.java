@@ -445,79 +445,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 					System.out.println("Exiting...");
 					//exit(1,200); //this did not exit
 					System.exit(1);
-					
 				}
-				
-				/*if (homePathSpecified_ == true) {
-					currentDir = homePath_;
-					System.out.println("home path was specified");
-				}
-				
-				File GIFfile = null;
-				if (OS.indexOf("win") >= 0) {
-					GIFfile = new File(currentDir + "\\" + gifFileName_); 
-					System.out.println("GIF absolute path is from first check: " + GIFfile.getAbsolutePath());
-				}
-				else {
-					GIFfile = new File(currentDir + "/" + gifFileName_); 
-				}
-				
-				if (GIFfile.exists() && !GIFfile.isDirectory()) { 
-					currentDir = System.getProperty("user.dir");
-					if (!silentMode_) System.out.println("GIF found using direct path, file name is: " + gifFileName_);
-					relativePath_ = true;
-			    }
-				
-				else {
-					
-					System.out.println("went to the next area");
-					///**** comment back
-					String jarPath = PIXELConsole.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-					
-					try {
-						String decodedPath = URLDecoder.decode(jarPath, "UTF-8");
-					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-					String jarDirpath = jarPath.substring(0,jarPath.lastIndexOf(File.separator));
-					///**** comment back
-					
-					if (pathSpecified_ == true) {
-						currentDir = homePath_;
-					}
-					else {
-						currentDir = jarDirpath;  //this doesn't work and just returns so if absolute url and not relative, need to specify the path
-					}
-					
-					//if (!silentMode_) System.out.println("Working Path is: " + currentDir);
-					
-					if (gifFileName_.contains("~")) { //~ shortcut for home directory
-						
-						gifFileName_ = gifFileName_.substring(gifFileName_.lastIndexOf(File.separator) + 1).trim();
-						if (!silentMode_) System.out.println("GIF found using home alias, file name is: " + gifFileName_);
-						
-					}
-					
-					else {
-					
-						
-						File GIFfileAbsolute = new File(gifFileName_);
-						System.out.println("GIF absolute path is from second check: " + GIFfileAbsolute.getAbsolutePath());
-						if (GIFfileAbsolute.exists() && !GIFfileAbsolute.isDirectory()) { 
-	                     
-							//gifFileName_ = GIFfileAbsolute.getName();
-							gifFileName_ = GIFfileAbsolute.getAbsolutePath();
-							absolutePath_ = true;
-							if (!silentMode_) System.out.println("GIF found using absolute path, file name is: " + gifFileName_);
-					    }
-						else {
-							System.out.println("GIF not found, please check the spelling and/or path, exiting now...");
-							exit(1,200);
-						}
-					}
-				}*/
 			}	
 			
 			if (arg.startsWith("--loop=")) {
@@ -1033,11 +961,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 				throw new BadArgumentsException("Unexpected option: " + arg);
 			}
 			
-			
-			//after here we go to the ioio loop
-			
-			//CheckandRunMode(); //this is only for testing , comment out later
-			
 		}
 		
 	public static class BadArgumentsException extends Exception {
@@ -1099,12 +1022,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    {
 		
 		try {
-			//if (pixel.GIFNeedsDecoding(currentDir, gifFileName_, currentResolution, gifFilePath_) == true) {    //resolution can be 16, 32, 64, 128 (String CurrentDir, String GIFName, int currentResolution)
+		
 			if (pixel.GIFNeedsDecoding(gifFilePath_, gifNameOnly_, currentResolution, gifFullPath_,decodedDir_) == true) {	
 				
 				if (!silentMode_)  System.out.println("Decoding " + gifFullPath_);
 				try {
-					//pixel.decodeGIF(currentDir, gifFilePath_, gifFileName_, currentResolution,KIND.width,KIND.height);
+					
 					pixel.decodeGIF(gifFullPath_, gifNameOnly_, currentResolution,KIND.width,KIND.height,decodedDir_);
 					
 				} catch (NoSuchAlgorithmException e) {
@@ -1127,8 +1050,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 			e.printStackTrace();
 		}
 		
-	   // setGIFnumFrames(pixel.getDecodednumFrames(currentDir, gifFileName_));
-	   // setGIFresolution(pixel.getDecodedresolution(currentDir, gifFileName_));
 	    setGIFnumFrames(pixel.getDecodednumFrames(gifNameOnly_, decodedDir_));
 	    setGIFresolution(pixel.getDecodedresolution(gifNameOnly_, decodedDir_));
 	    
@@ -1138,7 +1059,6 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    }
 	    else { //no override so just use as is
 	    	 setGIFselectedFileDelay(pixel.getDecodedframeDelay(gifNameOnly_, decodedDir_));  
-	    	 //setGIFfps(pixel.getDecodedfps(currentDir, gifFileName_)); //get the fps
 	    	 setGIFfps(pixel.getDecodedfps(gifNameOnly_, decodedDir_)); //get the fps
 	    }
 	    

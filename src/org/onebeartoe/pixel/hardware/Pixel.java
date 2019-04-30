@@ -146,7 +146,7 @@ public class Pixel
 		}
     }
        
-private int[] getDecodedMetadata(String currentDir, String gifName) {  //NOT USING THIS ONE RIGHT NOW
+/*private int[] getDecodedMetadata(String currentDir, String gifName) {  //NOT USING THIS ONE RIGHT NOW
 	
     	String gifNamePath = currentDir + "/decoded/" + gifName + ".txt";
     	
@@ -195,7 +195,7 @@ private int[] getDecodedMetadata(String currentDir, String gifName) {  //NOT USI
 	    	}
 
 		   return (decodedMetadata); //we are returning an array here
-	}
+	}*/
 
 public boolean GIFNeedsDecoding(String workingDir, String gifName, int currentResolution, String gifFullPath, String decodedDir) throws NoSuchAlgorithmException, IOException {  //need to pass the path of the GIF too
 	
@@ -220,7 +220,6 @@ public boolean GIFNeedsDecoding(String workingDir, String gifName, int currentRe
     //System.out.println("md5 of current file is " + SelectedFileMD5_);
     //int SelectedFileMD5Int = Integer.parseInt(SelectedFileMD5_);	
 	
-	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
 	
 	//System.out.println("PIXEL LED panel resolution is: " + currentResolution);
 	String decodedGIFPathTXT = decodedDir + gifName + ".txt";
@@ -250,12 +249,6 @@ public boolean GIFNeedsDecoding(String workingDir, String gifName, int currentRe
 }
 
 public int getDecodednumFrames(String gifName, String decodedDir) {  //need to return the meta data
-	
-	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
-	//String framestring = "animations/decoded/" + animation_name + ".rgb565";
-	//String gifNamePath = gifName + ".txt";
-	
-	//String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
 	
 	String gifDecodedTxtPath = decodedDir + gifName + ".txt";   //home/pi/pixel/atari2600/decoded/pacman.txt
 	
@@ -292,8 +285,6 @@ public int getDecodednumFrames(String gifName, String decodedDir) {  //need to r
     
     public float getDecodedfps(String gifName, String decodedDir) {  //need to return the meta data
     	
-    	//gifName = FilenameUtils.removeExtension(gifName); //with no extension, ex. tree instead of tree.gif
-    	//String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
     	String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
     	File filemeta = new File(gifDecodedTxtPath);
     	
@@ -334,10 +325,6 @@ public int getDecodednumFrames(String gifName, String decodedDir) {  //need to r
     
     public int getDecodedframeDelay(String gifName, String decodedDir) {  //need to return the meta data
     	
-    	
-    	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
-    	
-    	//String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
     	String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
     	
     	File filemeta = new File(gifDecodedTxtPath);
@@ -374,12 +361,6 @@ public int getDecodednumFrames(String gifName, String decodedDir) {  //need to r
    
     
  public int getDecodedresolution(String gifName, String decodedDir) {  //need to return the meta data
-    	
-	    //gifName = FilenameUtils.removeExtension(gifName); //with no extension
-	    //String framestring = "animations/decoded/" + animation_name + ".rgb565";
-	   // String gifNamePath = gifName + ".txt";
-	    //System.out.println("Decoded Path: " + currentDir + "/decoded/" + gifName + ".txt");
-	    //String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
 	    
 		String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
     	File filemeta = new File(gifDecodedTxtPath);
@@ -415,12 +396,6 @@ public int getDecodednumFrames(String gifName, String decodedDir) {  //need to r
  
  public String getDecodedmd5(String gifName, String decodedDir) {  //returns md5 of the target gif
  	
-	    //gifName = FilenameUtils.removeExtension(gifName); //with no extension
-	    //String framestring = "animations/decoded/" + animation_name + ".rgb565";
-	   // String gifNamePath = gifName + ".txt";
-	    //System.out.println("Decoded Path: " + currentDir + "/decoded/" + gifName + ".txt");
-	 
-	   // String gifNamePath = currentDir + "/decoded/" + gifName + ".txt"; 
 	    String gifDecodedTxtPath = decodedDir + gifName + ".txt"; 
 	    
 	    File filemeta = new File(gifDecodedTxtPath);
@@ -469,9 +444,6 @@ public int getDecodednumFrames(String gifName, String decodedDir) {  //need to r
 		 
     	BitmapBytes = new byte[frameWidth * frameHeight * 2]; //512 * 2 = 1024 or 1024 * 2 = 2048
 		frame_ = new short[frameWidth * frameHeight];
-    	
-    	//gifName = FilenameUtils.removeExtension(gifName); //with no extension
-    	//String gifNamePath = currentDir + "/decoded/" + gifName + ".rgb565";  //  ex. c:\animations\decoded\tree.rgb565
     	
     	String gifDecodedRGB565Path = decodedDir + gifName + ".rgb565"; 
     	
