@@ -4,7 +4,7 @@ public class Print_Usage {
 
 	public void printUsage(){
 
-	System.out.println("*** PIXEL Command Line 3.4 ***\n" 
+	System.out.println("*** PIXEL Command Line 3.5 ***\n" 
 			+ "Usage:"
 			+ "pixelc <options>"
 			+"Valid options are:\nGIF MODE\n"
@@ -39,6 +39,7 @@ public class Print_Usage {
 			+ "\nEx. java -jar \"/home/pi/pixel/pixelc.jar\" --gif=\"/home/pi/pixel/mamelibretro/pacman.gif\" --64x32 --write --silent"
 			+ "\nEx. java -jar pixelc.jar --gif=\"/mamelibretro/pacman.gif\" --64x32 --write"
 			+ "\nEx. java -jar -Dioio.SerialPorts=COM13 \"c:\\MAX 2.10\\pixel\\pixelc.jar\" --gif=\"c:\\MAX 2.10\\pixel\\atari7800\\Mat Mania Challenge (1989) (Atari).gif\" --write --64x32"
+			+ "\nEx. pixelc.exe --port=COM13 \"c:\\MAX 2.10\\pixel\\pixelc.jar\" --gif=\"c:\\MAX 2.10\\pixel\\atari7800\\Mat Mania Challenge (1989) (Atari).gif\" --write --64x32 (for windows .exe)"
 			+ "\nSCROLLING TEXT MODE / QUICKBASE SEARCH / SERVICE NOW / TWITTER FEED\n"
 			+ "\n--quickbase    QuickBase mode, send some scrolling text from QuickBase"
 			+ "\n--qbuserid=<text>    QuickBase user id"

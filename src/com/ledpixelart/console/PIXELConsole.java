@@ -32,6 +32,7 @@ import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.Timer;
@@ -299,6 +300,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	private static boolean relativePath_ = false;
 	private static String selectedLEDMatrix = "Adafruit 32x32";
 	public static String OS = System.getProperty("os.name").toLowerCase();
+	public static String port_ = null;
 	
     private static enum Command
 		{
@@ -478,6 +480,12 @@ public class PIXELConsole extends IOIOConsoleApp {
 				scrollingText_ = arg.substring(7);
 				if (!silentMode_) System.out.println("Scrolling Text Mode Selected");
 				scrollingTextMode = true;
+				validCommandLine = true;
+				z++;
+			}	
+			
+			if (arg.startsWith("--port=")) {
+				port_ = arg.substring(7);
 				validCommandLine = true;
 				z++;
 			}	
@@ -976,7 +984,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		
 		if (!silentMode_ && relativePath_) System.out.println("GIF found using direct path, file name is: " + gifFullPath_);
 		if (!silentMode_ && absolutePath_) System.out.println("GIF found using absolute path, file name is: " + gifFullPath_);
-		//if (!silentMode_) System.out.println("Working Path is: " + currentDir);
+		if (!silentMode_ && port_ != null) System.out.println("Specified Port: " + port_);
 		if (!silentMode_) System.out.println("PIXEL is in write mode\n");
 	
 		if (backgroundMode) {
