@@ -1178,7 +1178,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	  }
 	 
 	 
-	 private static void streamPNG(boolean writeMode) throws IOException 
+	 private static void handlePNG(boolean writeMode) throws IOException 
 	    {
 		
 		 //writeImagetoMatrix(BufferedImage originalImage, int frameWidth, int frameHeight) throws ConnectionLostException
@@ -1198,14 +1198,36 @@ public class PIXELConsole extends IOIOConsoleApp {
 		        //Pixel pixel = application.getPixel();
 		        //pixel.stopExistingTimer();
 		        
-		        try {
-					pixel.writeImagetoMatrix(image, KIND.width,KIND.height);
-				} catch (ConnectionLostException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} //to do add save parameter here
+		        if (pixelHardwareID.substring(0,4).equals("PIXL") && writeMode) {
+		        
+			        pixel.interactiveMode();
+			        pixel.writeMode(10);
+			        
+			        try {
+						pixel.writeImagetoMatrix(image, KIND.width,KIND.height);
+					} catch (ConnectionLostException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} //to do add save parameter here
+			        
+			        pixel.playLocalMode();
+		        }
+		        else {
+		        	  try {
+							pixel.writeImagetoMatrix(image, KIND.width,KIND.height);
+						} catch (ConnectionLostException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						} //to do add save parameter here
+		        }
 	        
 		 	}
+		 	
+		 	
+		 
+		 	
+		 	
+		 	
 		
 	  }
 	 
@@ -1489,10 +1511,10 @@ static void CheckandRunMode() throws IOException {
 		 else if (pngModeExternal == true) {
 			 
 					 if (isWriteMode() == true) {
-							streamPNG(true); //write to PIXEL's SD card
+							handlePNG(true); //write to PIXEL's SD card
 					}
 					else {
-							streamPNG(false);  //steam the GIF but don't write
+							handlePNG(false);  //steam the GIF but don't write
 					}
 		 }
 				
