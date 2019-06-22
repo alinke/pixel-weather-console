@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.swing.Timer;
 
@@ -180,7 +181,12 @@ public class Scroll_Text extends PIXELConsole {
 		   	    	               					System.out.println("We've looped " + loopCounter + " times and are now resetting the mode");
 		   	    	               					loopCounter = 0;
 		   	    	               					ProxTriggerDone = true; //let's reset the prox trigger flag so it can be triggered again
-		   	    	               					CheckandRunMode(); //now let's run the original setup and reset to the mode we were originally in per the command line parameters
+		   	    	               					try {
+														CheckandRunMode();
+													} catch (IOException e) {
+														// TODO Auto-generated catch block
+														e.printStackTrace();
+													} //now let's run the original setup and reset to the mode we were originally in per the command line parameters
 		   	    	               			    }
 	    	                               }
 	    	                               else

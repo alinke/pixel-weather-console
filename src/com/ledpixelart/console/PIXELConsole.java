@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -133,6 +134,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 	protected static String zip_ = "";
 	private static String gifFullPath_ = "";
 	private static String gifFilePath_ = "";
+	private static String pngFullPath_ = "";
+	private static String pngFilePath_ = "";
+	private static String pngNameOnly_ = "";
+	
 	protected static String zmw_ = "";
 	protected static String woeid_ = ""; // no longer used, this was for the yahoo api
 	protected static int woeidInt_;
@@ -158,6 +163,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 	static int loopCounter;
 	private static boolean gifModeInternal = false;
 	private static boolean gifModeExternal = false;
+	private static boolean pngModeExternal = false;
 	private static boolean weatherMode = false;
 	private static HttpGet getRequest;
 	private static HttpResponse httpResponse;
@@ -444,6 +450,44 @@ public class PIXELConsole extends IOIOConsoleApp {
 					System.out.println("  /home/pi/pixel/atari2600/Pitfall.gif (absolute path Linux or Mac)");
 					System.out.println("  c:\\Max 2.10\\pixelatari2600\\Pitall.gif (absolute path Windows)");
 					System.out.println("If the GIF filename has spaces or special characters, surround in quotes");
+					System.out.println("Exiting...");
+					//exit(1,200); //this did not exit
+					System.exit(1);
+				}
+			}	
+			
+			if (arg.startsWith("--png=")) {
+				
+				pngFullPath_ = arg.substring(6);
+				pngModeExternal = true;
+				validCommandLine = true;
+				z++;
+				
+				pngFilePath_ = FilenameUtils.getFullPath(pngFullPath_);  	//home/pi/pixel/atari2600/
+				pngNameOnly_ = FilenameUtils.getName(pngFullPath_); 		//pacman.png
+				pngNameOnly_ = FilenameUtils.removeExtension(pngNameOnly_); //pacman
+				
+				//System.out.println("GIF File Path is: " + gifFilePath_); 	//to do remove this
+				//System.out.println("GIF Name Only with no extension is: " + gifNameOnly_); //to do remove this
+				
+			/*
+			 * if (OS.indexOf("win") >= 0) { //if windows decodedDir_ = gifFilePath_ +
+			 * "decoded\\"; // c:\max 2.10\pixel\atari2600\decoded\ } else { decodedDir_ =
+			 * gifFilePath_ + "decoded/"; // /home/pi/pixel/atari2600/decoded/ }
+			 */
+				
+				File PNGfile = new File(pngFullPath_);
+				if (PNGfile.exists() && !PNGfile.isDirectory()) { 
+					//if (!silentMode_) System.out.println("GIF found, path=" + gifFullPath_);
+			    }
+				else {
+					System.out.println("PNG not found, please check the spelling and/or path");
+					System.out.println("You may enter a relative or absolute path to your PNG file, see examples below:");
+					System.out.println("  Pitfall.png (if in the same directory)");
+					System.out.println("  /atari2600/Pitfall.png (relative path)");
+					System.out.println("  /home/pi/pixel/atari2600/Pitfall.png (absolute path Linux or Mac)");
+					System.out.println("  c:\\Max 2.10\\pixelatari2600\\Pitall.png (absolute path Windows)");
+					System.out.println("If the PNG filename has spaces or special characters, surround in quotes");
 					System.out.println("Exiting...");
 					//exit(1,200); //this did not exit
 					System.exit(1);
@@ -1131,7 +1175,41 @@ public class PIXELConsole extends IOIOConsoleApp {
 	    				   timer = new Timer(getGIFselectedFileDelay(), AnimateTimer); //the timer calls this function per the interval of fps
 	    				   timer.start();
 	    			}    
-	      }
+	  }
+	 
+	 
+	 private static void streamPNG(boolean writeMode) throws IOException 
+	    {
+		
+		 //writeImagetoMatrix(BufferedImage originalImage, int frameWidth, int frameHeight) throws ConnectionLostException
+		 
+		 //to do add the write logic
+		 
+		 	String FilePathPNG = pngFullPath_;
+		 	File FilePNG = new File(FilePathPNG);
+		 	
+		 	if (FilePNG.exists()) {
+		 
+			 	URL url = null; 
+		        BufferedImage image;
+		        url = FilePNG.toURI().toURL();
+		        image = ImageIO.read(url);
+		        System.out.println("PNG image found: " + url.toString());
+		        //Pixel pixel = application.getPixel();
+		        //pixel.stopExistingTimer();
+		        
+		        try {
+					pixel.writeImagetoMatrix(image, KIND.width,KIND.height);
+				} catch (ConnectionLostException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} //to do add save parameter here
+	        
+		 	}
+		
+	  }
+	 
+	 
 	 
 	 private static void CheckAndStartTimer() {
 	    //TO DO make sure timer was initialized prior	
@@ -1398,7 +1476,7 @@ public class PIXELConsole extends IOIOConsoleApp {
 		    }
 		    return "?";
 		  } 
-static void CheckandRunMode() {
+static void CheckandRunMode() throws IOException {
 		 if (gifModeExternal == true) {
 							
 					if (isWriteMode() == true) {
@@ -1407,9 +1485,18 @@ static void CheckandRunMode() {
 					else {
 						streamGIF(false);  //steam the GIF but don't write
 					}
-				}
+		}
+		 else if (pngModeExternal == true) {
+			 
+					 if (isWriteMode() == true) {
+							streamPNG(true); //write to PIXEL's SD card
+					}
+					else {
+							streamPNG(false);  //steam the GIF but don't write
+					}
+		 }
 				
-				else if (weatherMode == true){
+		else if (weatherMode == true){
 					//old Yahoo Weather API
 					//weather.getWeather();
 					//weather.runWeatherAnimations();
@@ -1562,7 +1649,12 @@ static void CheckandRunMode() {
                 pixel.ioiO = ioio_;
                 if (!silentMode_) System.out.println("Found PIXEL: " + pixel.matrix + "\n");
 			
-                CheckandRunMode();
+                try {
+					CheckandRunMode();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 			
