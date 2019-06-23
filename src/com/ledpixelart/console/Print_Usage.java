@@ -4,11 +4,12 @@ public class Print_Usage {
 
 	public void printUsage(){
 
-	System.out.println("*** PIXEL Command Line 3.5 ***\n" 
+	System.out.println("*** PIXEL Command Line 3.6 ***\n" 
 			+ "Usage:"
 			+ "pixelc <options>"
 			+"Valid options are:\nGIF MODE\n"
-			+ "\n--gif=your_filename.gif  Send this GIF to PIXEL. IMPORTANT: You must place GIFs in the same directory as pixelc.jar"
+			+ "\n--gif=your_filename.gif  Send this GIF to PIXEL"
+			+ "\n--png=your_filename.png  Send this PNG to PIXEL"
 			+ "\n--loop=number  How many times to loop the GIF before exiting, omit this parameter to loop indefinitely"
 			+ "\n--write  Puts PIXEL into write mode, default is streaming mode"
 			+ "\n--framedelay=x  Overrides the GIF speed/frame delay where x is a whole number representing milliseconds between 1 and 1000"
