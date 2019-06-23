@@ -1012,8 +1012,8 @@ public class PIXELConsole extends IOIOConsoleApp {
 				//ledOn_ = !ledOn_;
 			} else if (line.equals("n")) {
 				//ledOn_ = true;
-			} else if (line.equals("f")) {
-				//ledOn_ = false;
+			} else if (line.equals("new")) {
+				System.out.println("new input coming in");
 			} else if (line.equals("q")) {
 				abort = true;
 				System.exit(1);
