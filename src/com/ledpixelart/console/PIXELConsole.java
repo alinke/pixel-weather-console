@@ -1211,7 +1211,10 @@ public class PIXELConsole extends IOIOConsoleApp {
 					} //to do add save parameter here
 			        
 			        pixel.playLocalMode();
+			        if (!silentMode_) System.out.println("Writing complete, now displaying...");
+					exit(0,200);
 		        }
+		        
 		        else {
 		        	  try {
 							pixel.writeImagetoMatrix(image, KIND.width,KIND.height);
